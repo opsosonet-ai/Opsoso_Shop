@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng Điều Khiển Công Nợ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Store chart data in data attributes for JavaScript -->
+    <div id="chartDataContainer" 
+         th:data-total-supplier-debt="${totalSupplierDebt}" 
+         th:data-total-customer-debt="${totalCustomerDebt}"
+         style="display:none;"></div>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .dashboard-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        .metric-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid;
+            transition: transform 0.2s;
+        }
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .metric-card.supplier {
+            border-left-color: #667eea;
+        }
+        .metric-card.customer {
+            border-left-color: #f5576c;
+        }
+        .metric-card.warning {
+            border-left-color: #ffc107;
+        }
+        .metric-card.danger {
+            border-left-color: #dc3545;
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+        .metric-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .metric-change {
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+        .metric-change.positive {
+            color: #28a745;
+        }
+        .metric-change.negative {
+            color: #dc3545;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 2rem;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #667eea;
+            font-weight: bold;
+        }
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: #f8f9fa;
+        }
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .quick-action {
+            text-decoration: none;
+            padding: 1rem;
+            border-radius: 8px;
+            background: white;
+            border: 1px solid #dee2e6;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .quick-action:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+            text-decoration: none;
+        }
+        .quick-action i {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+<!-- Navbar Fragment -->
+<div th:insert="~{cong-no/fragments/navbar.html :: congNoNavbar}"></div>
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-0">
+                    <i class="fas fa-chart-line"></i> Bảng Điều Khiển Công Nợ
+                </h1>
+                <p class="mb-0 mt-2">Tổng quan toàn bộ công nợ nhà phân phối và khách hàng</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="btn btn-light" onclick="refreshDashboard()">
+                    <i class="fas fa-sync"></i> Làm Mới
+                </button>
+                <button class="btn btn-light" onclick="printReport()">
+                    <i class="fas fa-print"></i> In Báo Cáo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI Metrics -->
+    <div class="row mb-4">
+        <!-- Total Supplier Debt -->
+        <div class="col-md-3">
+            <div class="metric-card supplier">
+                <div class="metric-label">
+                    <i class="fas fa-industry"></i> Nợ Nhà Phân Phối
+                </div>
+                <small class="text-muted d-block mb-2">Chưa thanh toán</small>
+                <div class="metric-value text-primary" th:text="${#format.vnd(totalSupplierDebt)}">
+                    0 VNĐ
+                </div>
+                <div class="metric-change" th:classappend="${supplierDebtChange != null && supplierDebtChange >= 0 ? 'positive' : 'negative'}">
+                    <i th:class="${supplierDebtChange != null && supplierDebtChange >= 0 ? 'fas fa-arrow-down' : 'fas fa-arrow-up'}"></i>
+                    <span th:text="${(supplierDebtChange != null && supplierDebtChange >= 0 ? 'Giảm' : 'Tăng') + ' ' + (supplierDebtChange != null ? T(java.lang.Math).abs(supplierDebtChange.doubleValue()) : 0)}"></span>
+                </div>
+                <a href="/cong-no/nha-phan-phoi/list" class="btn btn-sm btn-outline-primary mt-2">Xem Chi Tiết</a>
+            </div>
+        </div>
+
+        <!-- Total Customer Debt -->
+        <div class="col-md-3">
+            <div class="metric-card customer">
+                <div class="metric-label">
+                    <i class="fas fa-users"></i> Nợ của Khách Hàng
+                </div>
+                <small class="text-muted d-block mb-2">Chưa thu hồi</small>
+                <div class="metric-value text-danger" th:text="${#format.vnd(totalCustomerDebt)}">
+                    0 VNĐ
+                </div>
+                <div class="metric-change" th:classappend="${customerDebtChange != null && customerDebtChange >= 0 ? 'positive' : 'negative'}">
+                    <i th:class="${customerDebtChange != null && customerDebtChange >= 0 ? 'fas fa-arrow-up' : 'fas fa-arrow-down'}"></i>
+                    <span th:text="${(customerDebtChange != null && customerDebtChange >= 0 ? 'Tăng' : 'Giảm') + ' ' + (customerDebtChange != null ? T(java.lang.Math).abs(customerDebtChange.doubleValue()) : 0)}"></span>
+                </div>
+                <a href="/cong-no/khach-hang/list" class="btn btn-sm btn-outline-danger mt-2">Xem Chi Tiết</a>
+            </div>
+        </div>
+
+        <!-- Overdue Supplier Debt -->
+        <div class="col-md-3">
+            <div class="metric-card warning">
+                <div class="metric-label">
+                    <i class="fas fa-exclamation-triangle"></i> Nợ Nhà Phân Phối Quá Hạn
+                </div>
+                <div class="metric-value text-warning" th:text="${#format.vnd(overdueSupplierDebt)}">
+                    0 VNĐ
+                </div>
+                <div class="text-muted" style="font-size: 0.9rem;">
+                    <span th:text="${overdueSupplierCount}">0</span> công nợ
+                </div>
+                <a href="/cong-no/nha-phan-phoi/list?status=QUA_HAN" class="btn btn-sm btn-outline-warning mt-2">Xử Lý Ngay</a>
+            </div>
+        </div>
+
+        <!-- Overdue Customer Debt -->
+        <div class="col-md-3">
+            <div class="metric-card danger">
+                <div class="metric-label">
+                    <i class="fas fa-exclamation-circle"></i> Nợ Khách Hàng Quá Hạn
+                </div>
+                <div class="metric-value text-danger" th:text="${#format.vnd(overdueCustomerDebt)}">
+                    0 VNĐ
+                </div>
+                <div class="text-muted" style="font-size: 0.9rem;">
+                    <span th:text="${overdueCustomerCount}">0</span> công nợ
+                </div>
+                <a href="/cong-no/khach-hang/list?status=QUA_HAN" class="btn btn-sm btn-outline-danger mt-2">Xử Lý Ngay</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <!-- Debt Status Distribution -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-pie-chart"></i> Phân Bố Trạng Thái Công Nợ
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debt by Type -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-bar-chart"></i> So Sánh Nợ Theo Loại
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="typeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trend Chart -->
+    <!-- REMOVED: Trend Chart section removed per user request -->
+
+    <!-- Quick Actions -->
+    <!-- REMOVED: Quick Actions section removed per user request -->
+
+    <!-- Top Debtors Table -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-industry"></i> Top 10 Nhà Phân Phối Nợ Nhiều Nhất
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nhà Phân Phối</th>
+                                <th class="text-end">Tổng Nợ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="supplier : ${topSuppliers}">
+                                <td th:text="${supplier.nhaPhanPhoi.tenNhaPhanPhoi}">Nhà cung cấp</td>
+                                <td class="text-end text-danger fw-bold" th:text="${#format.vnd(supplier.tongTienConNo)}">0 VNĐ</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-users"></i> Top 10 Khách Hàng Nợ Nhiều Nhất
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Khách Hàng</th>
+                                <th class="text-end">Tổng Nợ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="customer : ${topCustomers}">
+                                <td th:text="${customer.khachHang.hoTen}">Khách hàng</td>
+                                <td class="text-end text-danger fw-bold" th:text="${#format.vnd(customer.tongTienConNo)}">0 VNĐ</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-history"></i> Ghi Nhận Thanh Toán/Thu Hồi Gần Đây
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Ngày</th>
+                                <th>Loại</th>
+                                <th>Mã Phiếu</th>
+                                <th>Bên Liên Quan</th>
+                                <th>Số Tiền</th>
+                                <th>Phương Thức</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="transaction : ${recentTransactions}">
+                                <td th:text="${#temporals.format(transaction.ngayThanhToan, 'dd/MM/yyyy HH:mm')}">01/11/2025 10:30</td>
+                                <td>
+                                    <span th:if="${transaction.loaiThanhToan == 'SUPPLIER'}" class="badge bg-info">Thanh Toán NCC</span>
+                                    <span th:if="${transaction.loaiThanhToan == 'CUSTOMER'}" class="badge bg-primary">Thu Hồi KH</span>
+                                </td>
+                                <td th:text="${transaction.soPhieu}">PT001</td>
+                                <td th:text="${transaction.tenBenLienQuan}">Tên bên liên quan</td>
+                                <td class="text-end text-success fw-bold" th:text="${#format.vnd(transaction.soTien)}">0 VNĐ</td>
+                                <td>
+                                    <span th:if="${transaction.phuongThuc == 'TIEN_MAT'}" class="badge bg-warning">Tiền Mặt</span>
+                                    <span th:if="${transaction.phuongThuc == 'CHUYEN_KHOAN'}" class="badge bg-info">Chuyển Khoản</span>
+                                    <span th:if="${transaction.phuongThuc == 'CHI_TIEU'}" class="badge bg-secondary">Chi Tiêu</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    // Debt Status Distribution Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Đang Nợ', 'Thanh Toán Từng Tuần', 'Đã Thanh Toán', 'Quá Hạn'],
+            datasets: [{
+                data: [
+                    [[${dangNoCount}]],
+                    [[${thanhToanTuanTuanCount}]],
+                    [[${daThanhToanCount}]],
+                    [[${quaHanCount}]]
+                ],
+                backgroundColor: [
+                    '#ffc107',
+                    '#17a2b8',
+                    '#28a745',
+                    '#dc3545'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' + context.parsed + ' công nợ';
+                        }
+                    }
+                }
+            }
+        }
+    });    // Debt by Type Chart
+    // Get data from data attributes (Thymeleaf processed)
+    const chartDataContainer = document.getElementById('chartDataContainer');
+    const totalSupplierDebt = parseFloat(chartDataContainer.getAttribute('data-total-supplier-debt')) || 0;
+    const totalCustomerDebt = parseFloat(chartDataContainer.getAttribute('data-total-customer-debt')) || 0;
+    
+    const typeCtx = document.getElementById('typeChart').getContext('2d');
+    new Chart(typeCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Nợ NCC', 'Nợ KH'],
+            datasets: [{
+                label: 'Tổng Nợ',
+                data: [
+                    totalSupplierDebt,
+                    totalCustomerDebt
+                ],
+                backgroundColor: ['#667eea', '#f5576c']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return new Intl.NumberFormat('vi-VN', {
+                                style: 'currency',
+                                currency: 'VND',
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 0
+                            }).format(value);
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return new Intl.NumberFormat('vi-VN', {
+                                style: 'currency',
+                                currency: 'VND',
+                                minimumFractionDigits: 0
+                            }).format(context.parsed.y);
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Trend Chart - REMOVED per user request
+    // const trendCtx = document.getElementById('trendChart').getContext('2d');
+    // (Trend chart initialization removed)
+
+    function refreshDashboard() {
+        location.reload();
+    }
+
+    function printReport() {
+        window.print();
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title>Thêm Bước Quy Trình Bảo Hành</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-chart-line me-2"></i>OSS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt me-1"></i>Tổng quan
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/bao-hanh">
+                            <i class="fas fa-shield-alt me-1"></i>Bảo hành
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/settings">
+                            <i class="fas fa-cog me-1"></i>Cài đặt
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <h1 class="mb-4">
+                    <i class="fas fa-plus-circle me-2"></i>Thêm Bước Quy Trình Bảo Hành
+                </h1>
+
+                <!-- Warranty Info -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Hàng hóa:</strong>
+                                <p th:text="${warranty.hangHoa != null ? warranty.hangHoa.tenHangHoa : 'N/A'}">N/A</p>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Khách hàng:</strong>
+                                <p th:text="${warranty.khachHang != null ? warranty.khachHang.hoTen : 'N/A'}">N/A</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline Form -->
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Thêm Bước Thực Hiện</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="timelineForm" th:action="@{/bao-hanh/{id}/timeline/save(id=${warranty.id})}" method="POST" enctype="application/x-www-form-urlencoded">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+                            <!-- Bước Thực Hiện -->
+                            <div class="mb-3">
+                                <label for="buocThucHien" class="form-label">
+                                    <i class="fas fa-check-circle me-2"></i>Bước Thực Hiện <span class="text-danger">*</span>
+                                </label>
+                                <div id="nextStepContainer">
+                                    <div class="spinner-border" role="status">
+                                        <span class="visually-hidden">Đang tải...</span>
+                                    </div>
+                                </div>
+                                <small class="form-text text-muted d-block mt-2">
+                                    <i class="fas fa-info-circle me-1"></i>Quy trình phải theo thứ tự từng bước. Chỉ hiển thị bước tiếp theo hợp lệ.
+                                </small>
+                            </div>
+
+                            <!-- Người Thực Hiện -->
+                            <div class="mb-3">
+                                <label for="nguoiThucHien" class="form-label">
+                                    <i class="fas fa-user me-2"></i>Người Thực Hiện
+                                </label>
+                                <input type="text" id="nguoiThucHien" name="nguoiThucHien" class="form-control"
+                                       placeholder="Nhập tên người thực hiện (tuỳ chọn)">
+                                <small class="form-text text-muted">Ví dụ: Nguyễn Văn A, Bộ phận Bảo hành, v.v.</small>
+                            </div>
+
+                            <!-- Ghi Chú -->
+                            <div class="mb-3">
+                                <label for="ghiChu" class="form-label">
+                                    <i class="fas fa-sticky-note me-2"></i>Ghi Chú
+                                </label>
+                                <textarea id="ghiChu" name="ghiChu" class="form-control" rows="4"
+                                          placeholder="Nhập ghi chú về bước này (tuỳ chọn)"></textarea>
+                                <small class="form-text text-muted">Ví dụ: Ghi chú về tình trạng thiết bị, thời gian gửi, v.v.</small>
+                            </div>
+
+                            <!-- Thời Gian -->
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Lưu ý:</strong> Thời gian thực hiện sẽ được tự động ghi nhận là thời gian hiện tại khi bạn lưu.
+                            </div>
+
+                            <!-- Buttons -->
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="#" onclick="history.back()" class="btn btn-secondary">
+                                    <i class="fas fa-times me-2"></i>Hủy
+                                </a>
+                                <button type="submit" class="btn btn-success" id="submitBtn">
+                                    <i class="fas fa-save me-2"></i>Lưu Bước
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Timeline Preview -->
+                <div class="card mt-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-timeline me-2"></i>Quy Trình Tiêu Chuẩn
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline-preview">
+                            <div class="timeline-step">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <h6>Nhận thiết bị</h6>
+                                    <p class="text-muted">Tiếp nhận thiết bị từ khách hàng</p>
+                                </div>
+                            </div>
+                            <div class="timeline-step">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <h6>Gửi nhà phân phối/hãng</h6>
+                                    <p class="text-muted">Gửi thiết bị đến nhà phân phối hoặc hãng sản xuất</p>
+                                </div>
+                            </div>
+                            <div class="timeline-step">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <h6>Lấy về từ nhà phân phối/hãng</h6>
+                                    <p class="text-muted">Lấy lại thiết bị sau khi được sửa chữa</p>
+                                </div>
+                            </div>
+                            <div class="timeline-step">
+                                <div class="step-number">4</div>
+                                <div class="step-content">
+                                    <h6>Trả thiết bị cho khách hàng</h6>
+                                    <p class="text-muted">Giao trả thiết bị cho khách hàng</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        .timeline-preview {
+            padding: 20px 0;
+        }
+        .timeline-step {
+            display: flex;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .timeline-step:last-child {
+            border-bottom: none;
+        }
+        .step-number {
+            background: #007bff;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+        .step-content h6 {
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        .step-content p {
+            margin-bottom: 0;
+            font-size: 0.9rem;
+        }
+        .completed-step {
+            background-color: #f0f0f0;
+            opacity: 0.6;
+        }
+        .completed-step .step-number {
+            background: #28a745;
+        }
+    </style>
+    <script>
+        // Add form submission handler
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('timelineForm');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    // Check if buocThucHien is filled
+                    const buocThucHien = document.getElementById('buocThucHien');
+                    if (!buocThucHien || !buocThucHien.value) {
+                        e.preventDefault();
+                        alert('Vui lòng chọn bước thực hiện');
+                        return false;
+                    }
+                    
+                    console.log('Form data:', {
+                        buocThucHien: buocThucHien.value,
+                        nguoiThucHien: document.getElementById('nguoiThucHien').value,
+                        ghiChu: document.getElementById('ghiChu').value
+                    });
+                    
+                    // Form submission will proceed normally
+                    return true;
+                });
+            }
+        });
+        
+        // Load next valid step
+        // URL format: /bao-hanh/2/timeline/add - extract warranty ID (2)
+        const pathParts = window.location.pathname.split('/').filter(p => p);
+        const warrantyId = pathParts[1]; // Index 1 is the warranty ID after 'bao-hanh'
+        
+        console.log('Warranty ID:', warrantyId);
+        console.log('Path parts:', pathParts);
+        
+        if (!warrantyId || warrantyId === 'timeline') {
+            console.error('Unable to extract warranty ID from path');
+            document.getElementById('nextStepContainer').innerHTML = `
+                <div class="alert alert-danger" role="alert">
+                    Lỗi: Không thể xác định ID bảo hành
+                </div>
+            `;
+        } else {
+            fetch(`/bao-hanh/${warrantyId}/next-steps`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(nextSteps => {
+                    const container = document.getElementById('nextStepContainer');
+                    
+                    if (nextSteps.length === 0) {
+                        container.innerHTML = `
+                            <div class="alert alert-warning" role="alert">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <strong>Quy trình đã hoàn thành!</strong> Tất cả các bước đã được thực hiện.
+                            </div>
+                        `;
+                        const submitBtn = document.getElementById('submitBtn');
+                        if (submitBtn) {
+                            submitBtn.disabled = true;
+                        }
+                    } else {
+                        const nextStep = nextSteps[0];
+                        // Use exact step names as defined in controller
+                        const stepNames = [
+                            'Nhận thiết bị',
+                            'Gửi nhà phân phối - bên bán',
+                            'Lấy về từ nhà phân phối - bên bán',
+                            'Trả thiết bị cho khách hàng'
+                        ];
+                        const stepIndex = stepNames.indexOf(nextStep) + 1;
+                        
+                        container.innerHTML = `
+                            <div class="alert alert-info d-flex align-items-center" role="alert">
+                                <i class="fas fa-arrow-right me-3" style="font-size: 1.5rem;"></i>
+                                <div>
+                                    <strong>Bước tiếp theo:</strong> (Bước ${stepIndex}/4)
+                                    <br>
+                                    <span style="font-weight: 500;">${nextStep}</span>
+                                </div>
+                            </div>
+                            <input type="hidden" id="buocThucHien" name="buocThucHien" value="${nextStep}" />
+                        `;
+                        
+                        console.log('Next step loaded:', nextStep);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('nextStepContainer').innerHTML = `
+                        <div class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Lỗi khi tải bước tiếp theo: ${error.message}
+                        </div>
+                    `;
+                });
+        }
+    </script>
+</body>
+</html>

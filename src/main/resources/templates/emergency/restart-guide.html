@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Restart Guide</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="fas fa-redo me-2"></i>Application Restart Guide
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Windows Instructions -->
+                        <div th:if="${isWindows}" class="mb-4">
+                            <h6 class="text-primary">
+                                <i class="fab fa-windows me-2"></i>Windows Restart Instructions
+                            </h6>
+                            <div class="alert alert-info">
+                                <h6>Method 1: IDE Restart (Recommended)</h6>
+                                <ol>
+                                    <li>If running in <strong>IntelliJ IDEA</strong> or <strong>Eclipse</strong>:</li>
+                                    <ul>
+                                        <li>Stop the running application (Red square button)</li>
+                                        <li>Click "Run" or "Debug" again</li>
+                                    </ul>
+                                </ol>
+                                
+                                <h6>Method 2: Command Line</h6>
+                                <ol>
+                                    <li>Open <strong>Command Prompt</strong> or <strong>PowerShell</strong> as Administrator</li>
+                                    <li>Navigate to your project directory</li>
+                                    <li>Stop the application: <code>Ctrl + C</code></li>
+                                    <li>Restart with: <code>mvn spring-boot:run</code></li>
+                                </ol>
+                                
+                                <h6>Method 3: Task Manager</h6>
+                                <ol>
+                                    <li>Open <strong>Task Manager</strong> (Ctrl + Shift + Esc)</li>
+                                    <li>Find Java processes and end them</li>
+                                    <li>Restart the application</li>
+                                </ol>
+                            </div>
+                        </div>
+
+                        <!-- Linux Instructions -->
+                        <div th:if="${isLinux}" class="mb-4">
+                            <h6 class="text-success">
+                                <i class="fab fa-linux me-2"></i>Linux Restart Instructions
+                            </h6>
+                            <div class="alert alert-success">
+                                <h6>Method 1: Terminal (Current Session)</h6>
+                                <div class="bg-dark text-light p-3 rounded">
+                                    <code>
+                                        # Stop current application<br>
+                                        Ctrl + C<br><br>
+                                        # Restart application<br>
+                                        mvn spring-boot:run
+                                    </code>
+                                </div>
+                                
+                                <h6>Method 2: Kill Process</h6>
+                                <div class="bg-dark text-light p-3 rounded">
+                                    <code>
+                                        # Find Spring Boot process<br>
+                                        ps aux | grep spring-boot<br><br>
+                                        # Kill the process<br>
+                                        pkill -f spring-boot<br><br>
+                                        # Restart application<br>
+                                        mvn spring-boot:run
+                                    </code>
+                                </div>
+                                
+                                <h6>Method 3: Service Mode (if configured)</h6>
+                                <div class="bg-dark text-light p-3 rounded">
+                                    <code>
+                                        # Restart as service<br>
+                                        sudo systemctl restart your-app<br><br>
+                                        # Check status<br>
+                                        sudo systemctl status your-app
+                                    </code>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Universal Instructions -->
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-exclamation-triangle me-2"></i>Important Notes</h6>
+                            <ul class="mb-0">
+                                <li><strong>Configuration Update:</strong> The application.properties file has been updated with new database settings</li>
+                                <li><strong>Restart Required:</strong> Changes will only take effect after a full application restart</li>
+                                <li><strong>Port 8080:</strong> Make sure port 8080 is available before restarting</li>
+                                <li><strong>Database Connection:</strong> Ensure your database server is running and accessible</li>
+                            </ul>
+                        </div>
+
+                        <!-- Test Connection -->
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6><i class="fas fa-check-circle me-2"></i>After Restart - Test Connection</h6>
+                                <p>Once the application restarts successfully, you can:</p>
+                                <ol>
+                                    <li>Access the homepage: <a href="http://localhost:8080" target="_blank">http://localhost:8080</a></li>
+                                    <li>Check settings page: <a href="http://localhost:8080/settings" target="_blank">http://localhost:8080/settings</a></li>
+                                    <li>Verify database connection in the application logs</li>
+                                </ol>
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <a href="/emergency/setup" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Setup
+                            </a>
+                            <a href="/" class="btn btn-primary">
+                                <i class="fas fa-home me-2"></i>Go to Homepage
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title>Tạo Bảo hành</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Select2 for searchable dropdowns -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .form-card {
+            border-left: 4px solid #28a745;
+        }
+        .info-box {
+            background-color: #e8f5e9;
+            border-left: 3px solid #28a745;
+            padding: 1rem;
+            border-radius: 0.25rem;
+            margin-bottom: 1rem;
+        }
+        .badge-new {
+            position: relative;
+            top: -2px;
+            margin-left: 5px;
+        }
+        .device-source-toggle {
+            margin-top: 0.5rem;
+        }
+        .toggle-section {
+            padding: 1rem;
+            background-color: #f0f0f0;
+            border-radius: 0.25rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-chart-line me-2"></i>OSS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt me-1"></i>Tổng quan
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/bao-hanh">
+                            <i class="fas fa-shield-alt me-1"></i>Bảo hành
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1>
+                    <i class="fas fa-plus-circle me-2"></i>Tạo Bảo hành Mới
+                </h1>
+                <p class="text-muted">Tạo bảo hành cho hàng hóa đã bán</p>
+            </div>
+        </div>
+
+        <!-- Info Box -->
+        <div class="info-box">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Hướng dẫn:</strong> 
+            <ol>
+                <li>Chọn <strong>khách hàng</strong> hoặc tạo mới (bắt buộc)</li>
+                <li>Chọn <strong>hàng hóa</strong> hoặc tạo mới - danh sách sẽ cập nhật với hàng hóa đã bán cho khách hàng</li>
+                <li>Chọn <strong>nguồn thiết bị:</strong> Hàng bán ra của công ty hoặc Hàng khác (không phải do công ty bán)</li>
+                <li><strong>Ngày bán</strong> sẽ tự động điền (nếu chọn hàng bán ra)</li>
+                <li><strong>Ngày hết hạn</strong> sẽ tự động tính từ ngày bán + thời gian bảo hành</li>
+            </ol>
+        </div>
+
+        <!-- Form -->
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="card form-card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-edit me-2"></i>Thông tin Bảo hành
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/bao-hanh/save}" method="POST">
+                            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+                            <input type="hidden" id="chiTietPhieuXuatId" name="chiTietPhieuXuatId" value="">
+
+                            <!-- Hàng hóa & Khách hàng -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="khachHang" class="form-label">Khách hàng <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <select class="form-select" id="khachHang" name="khachHang.id" required>
+                                            <option value="">-- Chọn khách hàng --</option>
+                                            <option th:each="kh : ${khachHangList}" 
+                                                    th:value="${kh.id}" 
+                                                    th:text="${kh.hoTen}">
+                                            </option>
+                                        </select>
+                                        <button class="btn btn-outline-primary" type="button" id="createCustomerBtn" 
+                                                title="Tạo khách hàng mới">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">Chọn khách hàng mua hàng (bắt buộc)</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="hangHoa" class="form-label">Hàng hóa <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <select class="form-select" id="hangHoa" name="hangHoa.id" required>
+                                            <option value="">-- Chọn hàng hóa --</option>
+                                            <option th:each="hh : ${hangHoaList}" 
+                                                    th:value="${hh.id}" 
+                                                    th:text="${hh.tenHangHoa}">
+                                            </option>
+                                        </select>
+                                        <button class="btn btn-outline-primary" type="button" id="createProductBtn" 
+                                                title="Tạo hàng hóa mới">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <small class="text-muted text-success">
+                                        <i class="fas fa-info-circle"></i>
+                                        Danh sách hàng hóa sẽ cập nhật khi chọn khách hàng
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Device Source Selection -->
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label class="form-label">Nguồn thiết bị <span class="text-danger">*</span></label>
+                                    <div class="btn-group w-100" role="group" aria-label="Device source">
+                                        <input type="radio" class="btn-check" name="deviceSource" id="deviceSourceSold" 
+                                               value="sold" checked>
+                                        <label class="btn btn-outline-primary" for="deviceSourceSold">
+                                            <i class="fas fa-check-circle me-2"></i>Hàng bán ra của công ty
+                                        </label>
+
+                                        <input type="radio" class="btn-check" name="deviceSource" id="deviceSourceOther" 
+                                               value="other">
+                                        <label class="btn btn-outline-warning" for="deviceSourceOther">
+                                            <i class="fas fa-box me-2"></i>Hàng khác (không do công ty bán)
+                                        </label>
+                                    </div>
+                                    <small class="text-muted d-block mt-2">
+                                        Chọn "Hàng khác" nếu bảo hành thiết bị không phải do công ty bán ra
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Ngày bán & Thời gian bảo hành -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="ngayBan" class="form-label">Ngày bán <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="ngayBan" name="ngayBan" required>
+                                    <small class="text-muted" id="ngayBanHint">Ngày bán hàng (sẽ tự động điền)</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="thoiGianBaoHanh" class="form-label">Thời gian bảo hành (tháng) <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="thoiGianBaoHanh" name="thoiGianBaoHanh" 
+                                           value="12" min="1" max="60" required>
+                                    <small class="text-muted">Số tháng bảo hành</small>
+                                </div>
+                            </div>
+
+                            <!-- Ngày hết hạn (auto-calculate) -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="ngayHetHanBaoHanh" class="form-label">Ngày hết hạn bảo hành <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="ngayHetHanBaoHanh" name="ngayHetHanBaoHanh" required readonly>
+                                    <small class="text-muted">Tự động tính từ ngày bán + thời gian bảo hành</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="trangThai" class="form-label">Trạng thái <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="trangThai" name="trangThai" required>
+                                        <option value="Còn hiệu lực">Còn hiệu lực</option>
+                                        <option value="Hết hạn">Hết hạn</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Ghi chú -->
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="ghiChu" class="form-label">Ghi chú</label>
+                                    <textarea class="form-control" id="ghiChu" name="ghiChu" rows="3" placeholder="Nhập ghi chú (tuỳ chọn)"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="d-grid gap-2 d-sm-flex justify-content-sm-end">
+                                <a href="/bao-hanh" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-times me-2"></i>Hủy
+                                </a>
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <i class="fas fa-save me-2"></i>Lưu Bảo hành
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const khachHangSelect = document.getElementById('khachHang');
+            const hangHoaSelect = document.getElementById('hangHoa');
+            const ngayBanInput = document.getElementById('ngayBan');
+            const thoiGianInput = document.getElementById('thoiGianBaoHanh');
+            const deviceSourceRadios = document.querySelectorAll('input[name="deviceSource"]');
+            const createCustomerBtn = document.getElementById('createCustomerBtn');
+            const createProductBtn = document.getElementById('createProductBtn');
+            
+            // Store all hàng hóa options
+            const allHangHoaOptions = Array.from(hangHoaSelect.options).filter(opt => opt.value !== '');
+            
+            // Initialize Select2
+            $(khachHangSelect).select2({
+                theme: 'bootstrap-5',
+                placeholder: '-- Chọn khách hàng --',
+                allowClear: true,
+                width: '100%'
+            });
+            
+            $(hangHoaSelect).select2({
+                theme: 'bootstrap-5',
+                placeholder: '-- Chọn hàng hóa --',
+                allowClear: true,
+                width: '100%'
+            });
+
+            // Create Customer Button
+            createCustomerBtn.addEventListener('click', function() {
+                const customerName = prompt('Nhập tên khách hàng mới:');
+                if (customerName && customerName.trim()) {
+                    // Create via API or simple modal
+                    const phone = prompt('Nhập số điện thoại (tuỳ chọn):');
+                    const email = prompt('Nhập email (tuỳ chọn):');
+                    
+                    // POST to create customer
+                    fetch('/khach-hang/api/create', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
+                        },
+                        body: JSON.stringify({
+                            hoTen: customerName,
+                            soDienThoai: phone || '',
+                            email: email || ''
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Lỗi tạo khách hàng');
+                        const contentType = response.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            return response.json();
+                        } else {
+                            return response.text().then(text => {
+                                throw new Error('Invalid response: ' + text);
+                            });
+                        }
+                    })
+                    .then(data => {
+                        if (data && data.id) {
+                            // Add new option and select it
+                            const newOption = new Option(customerName, data.id, false, true);
+                            $(khachHangSelect).append(newOption).trigger('change');
+                            
+                            // Reload the select
+                            fetch('/bao-hanh/api/khach-hang-list')
+                                .then(r => {
+                                    const contentType = r.headers.get('content-type');
+                                    if (contentType && contentType.includes('application/json')) {
+                                        return r.json();
+                                    } else {
+                                        return r.text().then(text => {
+                                            throw new Error('Invalid response: ' + text);
+                                        });
+                                    }
+                                })
+                                .then(customers => {
+                                    if (Array.isArray(customers)) {
+                                        $(khachHangSelect).empty();
+                                        $(khachHangSelect).append('<option value="">-- Chọn khách hàng --</option>');
+                                        customers.forEach(c => {
+                                            $(khachHangSelect).append(new Option(c.hoTen, c.id));
+                                        });
+                                        $(khachHangSelect).val(data.id).trigger('change');
+                                    }
+                                })
+                                .catch(err => console.error('Lỗi tải danh sách khách hàng:', err));
+                            
+                            alert('Khách hàng "' + customerName + '" đã được tạo thành công!');
+                        } else {
+                            alert('Lỗi: Không thể tạo khách hàng');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Lỗi: ' + error.message);
+                    });
+                }
+            });
+
+            // Create Product Button
+            createProductBtn.addEventListener('click', function() {
+                const productName = prompt('Nhập tên hàng hóa mới:');
+                if (productName && productName.trim()) {
+                    const soSerial = prompt('Nhập số Serial (bắt buộc):');
+                    if (!soSerial || !soSerial.trim()) {
+                        alert('Số Serial không được để trống!');
+                        return;
+                    }
+                    
+                    // POST to create product
+                    fetch('/hang-hoa/api/create', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
+                        },
+                        body: JSON.stringify({
+                            tenHangHoa: productName,
+                            soSerial: soSerial.trim()
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Lỗi tạo hàng hóa');
+                        const contentType = response.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            return response.json();
+                        } else {
+                            return response.text().then(text => {
+                                throw new Error('Invalid response: ' + text);
+                            });
+                        }
+                    })
+                    .then(data => {
+                        if (data && data.id) {
+                            // Add new option
+                            const newOption = new Option(productName, data.id, false, true);
+                            $(hangHoaSelect).append(newOption).trigger('change');
+                            
+                            alert('Hàng hóa "' + productName + '" đã được tạo thành công!');
+                        } else {
+                            alert('Lỗi: Không thể tạo hàng hóa');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Lỗi: ' + error.message);
+                    });
+                }
+            });
+
+            // Device Source Change Handler
+            deviceSourceRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const deviceSource = this.value;
+                    const ngayBanHint = document.getElementById('ngayBanHint');
+                    
+                    if (deviceSource === 'sold') {
+                        // For sold devices - date auto-fills from purchase
+                        ngayBanHint.textContent = 'Ngày bán hàng (sẽ tự động điền)';
+                        ngayBanInput.setAttribute('placeholder', 'Sẽ tự động điền');
+                        
+                        // Filter hàng hóa to show only sold items
+                        khachHangSelect.dispatchEvent(new Event('change'));
+                    } else {
+                        // For other devices - user enters date manually
+                        ngayBanHint.textContent = 'Ngày bắt đầu bảo hành (nhập thủ công)';
+                        ngayBanInput.setAttribute('placeholder', 'Chọn ngày');
+                        ngayBanInput.value = '';
+                        ngayBanInput.removeAttribute('readonly');
+                        
+                        // Show all hàng hóa from initial list
+                        hangHoaSelect.innerHTML = '<option value="">-- Chọn hàng hóa --</option>';
+                        allHangHoaOptions.forEach(opt => {
+                            const optionClone = opt.cloneNode(true);
+                            hangHoaSelect.appendChild(optionClone);
+                        });
+                        $(hangHoaSelect).val('').trigger('change');
+                    }
+                    
+                    // Recalculate expiry date
+                    calculateExpiryDate();
+                });
+            });
+            
+            // Filter hàng hóa and populate ngayBan when khách hàng changes
+            khachHangSelect.addEventListener('change', function() {
+                const khachHangId = this.value;
+                const deviceSource = document.querySelector('input[name="deviceSource"]:checked').value;
+                
+                if (!khachHangId) {
+                    // Reset to all options
+                    hangHoaSelect.innerHTML = '<option value="">-- Chọn hàng hóa --</option>';
+                    allHangHoaOptions.forEach(opt => {
+                        hangHoaSelect.appendChild(opt.cloneNode(true));
+                    });
+                    $(hangHoaSelect).val('').trigger('change');
+                    ngayBanInput.value = '';
+                    return;
+                }
+                
+                if (deviceSource === 'sold') {
+                    // Fetch hàng hóa with ngày bán for this khách hàng
+                    fetch(`/bao-hanh/api/hang-hoa-with-ngay-ban/${khachHangId}`)
+                        .then(response => {
+                            const contentType = response.headers.get('content-type');
+                            if (!response.ok) {
+                                throw new Error('Server error: ' + response.status);
+                            }
+                            if (contentType && contentType.includes('application/json')) {
+                                return response.json();
+                            } else {
+                                return response.text().then(text => {
+                                    throw new Error('Invalid JSON response: ' + text);
+                                });
+                            }
+                        })
+                        .then(data => {
+                            // Clear current options
+                            hangHoaSelect.innerHTML = '<option value="">-- Chọn hàng hóa --</option>';
+                            
+                            if (data && Array.isArray(data) && data.length > 0) {
+                                // Add filtered options with data attributes
+                                data.forEach(hangHoa => {
+                                    const option = document.createElement('option');
+                                    option.value = hangHoa.id;
+                                    option.textContent = hangHoa.tenHangHoa;
+                                    // Store ngayBan as data attribute
+                                    option.dataset.ngayBan = hangHoa.ngayBan;
+                                    hangHoaSelect.appendChild(option);
+                                });
+                            } else {
+                                const option = document.createElement('option');
+                                option.value = '';
+                                option.textContent = '-- Khách hàng này chưa mua hàng nào --';
+                                option.disabled = true;
+                                hangHoaSelect.appendChild(option);
+                            }
+                            $(hangHoaSelect).val('').trigger('change');
+                        })
+                        .catch(error => {
+                            console.error('Lỗi:', error);
+                            // Clear options and show message
+                            hangHoaSelect.innerHTML = '<option value="">-- Chọn hàng hóa --</option>';
+                            $(hangHoaSelect).val('').trigger('change');
+                            console.warn('Cảnh báo: ' + error.message);
+                        });
+                } else {
+                    // For 'other' device source, show all products regardless of khachHangId
+                    hangHoaSelect.innerHTML = '<option value="">-- Chọn hàng hóa --</option>';
+                    allHangHoaOptions.forEach(opt => {
+                        hangHoaSelect.appendChild(opt.cloneNode(true));
+                    });
+                    $(hangHoaSelect).val('').trigger('change');
+                }
+            });
+            
+            // Update ngayBan and chiTietPhieuXuatId when hàng hóa is selected
+            hangHoaSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                const hangHoaId = this.value;
+                const khachHangId = khachHangSelect.value;
+                const deviceSource = document.querySelector('input[name="deviceSource"]:checked').value;
+                
+                if (deviceSource === 'sold' && selectedOption.dataset.ngayBan && khachHangId && hangHoaId) {
+                    ngayBanInput.value = selectedOption.dataset.ngayBan;
+                    ngayBanInput.setAttribute('readonly', 'readonly');
+                    calculateExpiryDate();
+                    
+                    // Fetch chiTietPhieuXuatId
+                    fetch(`/bao-hanh/api/chi-tiet-phieu-xuat/${khachHangId}/${hangHoaId}`)
+                        .then(response => {
+                            if (response.ok) {
+                                const contentType = response.headers.get('content-type');
+                                if (contentType && contentType.includes('application/json')) {
+                                    return response.json();
+                                } else {
+                                    return response.text();
+                                }
+                            } else if (response.status === 404) {
+                                console.warn('Chi tiết phiếu xuất không tìm thấy');
+                                return null;
+                            } else {
+                                throw new Error('Error: ' + response.status);
+                            }
+                        })
+                        .then(data => {
+                            if (data) {
+                                document.getElementById('chiTietPhieuXuatId').value = data;
+                            } else {
+                                document.getElementById('chiTietPhieuXuatId').value = '';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Lỗi khi lấy chi tiết phiếu xuất:', error);
+                        });
+                } else if (deviceSource === 'other') {
+                    // For other devices, user can set ngayBan manually
+                    ngayBanInput.removeAttribute('readonly');
+                    document.getElementById('chiTietPhieuXuatId').value = ''; // Use empty for non-company devices
+                    calculateExpiryDate();
+                } else {
+                    ngayBanInput.value = '';
+                    document.getElementById('ngayHetHanBaoHanh').value = '';
+                    document.getElementById('chiTietPhieuXuatId').value = '';
+                }
+            });
+            
+            // Auto-calculate warranty expiry date
+            function calculateExpiryDate() {
+                const ngayBan = new Date(ngayBanInput.value);
+                const thoiGian = parseInt(thoiGianInput.value) || 0;
+                
+                if (ngayBan && !isNaN(ngayBan) && thoiGian > 0) {
+                    // Add months to the date
+                    const expiryDate = new Date(ngayBan);
+                    expiryDate.setMonth(expiryDate.getMonth() + thoiGian);
+                    
+                    const year = expiryDate.getFullYear();
+                    const month = String(expiryDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(expiryDate.getDate()).padStart(2, '0');
+                    
+                    document.getElementById('ngayHetHanBaoHanh').value = `${year}-${month}-${day}`;
+                }
+            }
+            
+            // Trigger calculation on input change
+            ngayBanInput.addEventListener('change', calculateExpiryDate);
+            thoiGianInput.addEventListener('change', calculateExpiryDate);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+# Quick Reference: LazyInitializationException Fix
+
+## The Problem
+```
+❌ java.lang.NullPointerException or LazyInitializationException
+❌ Error printing invoice: http://127.0.0.1:8080/phieu-xuat/94/print
+❌ Trying to access chiTietList (invoice details) after session closes
+```
+
+## The Solution
+Add one annotation to each print method:
+```java
+@Transactional(readOnly = true)
+```
+
+## Location
+**File**: `PhieuXuatController.java`
+
+**Methods**:
+- `printPhieuXuat()` at line 376
+- `printPhieuXuatByMa()` at line 408
+
+## What Changed
+```java
+// BEFORE ❌
+@GetMapping("/{id}/print")
+public String printPhieuXuat(...) { }
+
+// AFTER ✅
+@GetMapping("/{id}/print")
+@Transactional(readOnly = true)
+public String printPhieuXuat(...) { }
+```
+
+## Import Needed
+```java
+import org.springframework.transaction.annotation.Transactional;
+```
+
+## Verification
+```bash
+# Build should succeed
+mvn clean install
+
+# Tests should pass
+mvn test
+
+# Print should work
+http://localhost:8080/phieu-xuat/1/print
+```
+
+## Why It Works
+- Keeps Hibernate session open during template rendering
+- Lazy collections can be loaded from database
+- Session closes after template completes
+
+## Status
+✅ **FIXED & TESTED**
+✅ All tests passing
+✅ Build successful
+✅ Print functionality working
+
+---
+
+**Key**: Keep Hibernate session active while Thymeleaf renders template

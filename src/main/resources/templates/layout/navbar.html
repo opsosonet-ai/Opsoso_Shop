@@ -1,0 +1,89 @@
+<!-- Navigation Bar Fragment (để include trong các trang khác) -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary" xmlns:th="http://www.thymeleaf.org">
+    <div class="container">
+        <a class="navbar-brand" href="/dashboard">
+            <i class="fas fa-chart-line me-2"></i>OSS
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/dashboard" data-nav-dashboard>
+                        <i class="fas fa-tachometer-alt me-1"></i>Tổng quan
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/nhan-vien" data-nav-nhanvien>
+                        <i class="fas fa-users me-1"></i>Nhân viên
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/hang-hoa" data-nav-hanghoa>
+                        <i class="fas fa-box me-1"></i>Hàng hóa
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/khach-hang" data-nav-khachhang>
+                        <i class="fas fa-user-friends me-1"></i>Khách hàng
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/nha-phan-phoi" data-nav-nhaphanphoi>
+                        <i class="fas fa-truck me-1"></i>Nhà phân phối
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/bao-hanh" data-nav-baohanh>
+                        <i class="fas fa-shield-alt me-1"></i>Bảo hành
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/users" data-nav-users>
+                        <i class="fas fa-user-lock me-1"></i>Quản lý User
+                    </a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/settings" data-nav-settings>
+                        <i class="fas fa-cog me-1"></i>Cài đặt
+                    </a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user me-1"></i>
+                        <span th:text="${currentUser ?: 'User'}">User</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="/auth/change-password">
+                            <i class="fas fa-key me-2"></i>Đổi mật khẩu
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/auth/logout">
+                            <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                        </a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<script>
+    // Set active nav link based on current path
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentPath = window.location.pathname;
+        const navLinks = document.querySelectorAll('.navbar-nav a.nav-link');
+        
+        navLinks.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && currentPath.startsWith(href) && href !== '/') {
+                link.classList.add('active');
+            } else if (href === '/dashboard' && currentPath === '/') {
+                link.classList.add('active');
+            }
+        });
+    });
+</script>

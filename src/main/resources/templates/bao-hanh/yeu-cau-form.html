@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title>Tạo Yêu cầu Bảo hành</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .form-card {
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-chart-line me-2"></i>OSS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt me-1"></i>Tổng quan
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/bao-hanh">
+                            <i class="fas fa-shield-alt me-1"></i>Bảo hành
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1>
+                    <i class="fas fa-plus-circle me-2"></i>Tạo Yêu cầu Bảo hành
+                </h1>
+                <p class="text-muted">Lập yêu cầu bảo hành mới cho hàng hóa</p>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="card form-card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-edit me-2"></i>Thông tin Yêu cầu
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/bao-hanh/yeu-cau/save}" method="POST">
+                            <!-- Warranty ID (Hidden) -->
+                            <input type="hidden" name="id" th:value="${claim != null ? claim.id : ''}">
+                            <input type="hidden" name="warranty.id" th:value="${warranty != null ? warranty.id : ''}">
+
+                            <!-- Warranty Info (Read-only) -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Hàng hóa</label>
+                                    <input type="text" class="form-control" th:value="${warranty != null and warranty.hangHoa != null ? warranty.hangHoa.tenHangHoa : ''}" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Khách hàng</label>
+                                    <input type="text" class="form-control" th:value="${warranty != null and warranty.khachHang != null ? warranty.khachHang.hoTen : ''}" readonly>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Ngày bán</label>
+                                    <input type="text" class="form-control" th:value="${warranty != null ? #temporals.format(warranty.ngayBan, 'dd/MM/yyyy') : ''}" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Ngày hết hạn bảo hành</label>
+                                    <input type="text" class="form-control" th:value="${warranty != null ? #temporals.format(warranty.ngayHetHanBaoHanh, 'dd/MM/yyyy') : ''}" readonly>
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <!-- Claim Info -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="loaiLoi" class="form-label">Loại lỗi <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="loaiLoi" name="loaiLoi" required>
+                                        <option value="">-- Chọn loại lỗi --</option>
+                                        <option value="Hỏng hóc" th:selected="${claim != null and claim.loaiLoi == 'Hỏng hóc'}">Hỏng hóc</option>
+                                        <option value="Lỗi chất lượng" th:selected="${claim != null and claim.loaiLoi == 'Lỗi chất lượng'}">Lỗi chất lượng</option>
+                                        <option value="Không hoạt động" th:selected="${claim != null and claim.loaiLoi == 'Không hoạt động'}">Không hoạt động</option>
+                                        <option value="Khác" th:selected="${claim != null and claim.loaiLoi == 'Khác'}">Khác</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="ngayYeuCau" class="form-label">Ngày yêu cầu <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="ngayYeuCau" name="ngayYeuCau" required th:value="${claim != null ? claim.ngayYeuCau : ''}">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="moTaVanDe" class="form-label">Mô tả vấn đề <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="moTaVanDe" name="moTaVanDe" rows="4" required th:text="${claim != null ? claim.moTaVanDe : ''}"></textarea>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="d-grid gap-2 d-sm-flex justify-content-sm-end">
+                                <a href="/bao-hanh" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-times me-2"></i>Hủy
+                                </a>
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-save me-2"></i>Lưu Yêu cầu
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Set today's date if creating new claim
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateInput = document.getElementById('ngayYeuCau');
+            if (!dateInput.value) {
+                const today = new Date().toISOString().split('T')[0];
+                dateInput.value = today;
+            }
+        });
+    </script>
+</body>
+</html>

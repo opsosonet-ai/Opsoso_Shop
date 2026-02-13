@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title>Sửa Bảo hành</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .form-card {
+            border-left: 4px solid #ff9800;
+        }
+        .info-box {
+            background-color: #fff3e0;
+            border-left: 3px solid #ff9800;
+            padding: 1rem;
+            border-radius: 0.25rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-chart-line me-2"></i>OSS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt me-1"></i>Tổng quan
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/bao-hanh">
+                            <i class="fas fa-shield-alt me-1"></i>Bảo hành
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1>
+                    <i class="fas fa-edit me-2"></i>Sửa Bảo hành
+                </h1>
+                <p class="text-muted">Cập nhật thông tin bảo hành</p>
+            </div>
+        </div>
+
+        <!-- Info Box -->
+        <div class="info-box">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Lưu ý:</strong> Chỉ có thể sửa trạng thái và ghi chú của bảo hành.
+        </div>
+
+        <!-- Form -->
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="card form-card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="fas fa-edit me-2"></i>Thông tin Bảo hành
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/bao-hanh/{id}/update(id=${warranty.id})}" method="POST">
+                            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+
+                            <!-- Hàng hóa & Khách hàng (read-only) -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Hàng hóa</label>
+                                    <input type="text" class="form-control" th:value="${warranty.hangHoa != null ? warranty.hangHoa.tenHangHoa : ''}" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Khách hàng</label>
+                                    <input type="text" class="form-control" th:value="${warranty.khachHang != null ? warranty.khachHang.hoTen : ''}" readonly>
+                                </div>
+                            </div>
+
+                            <!-- Ngày bán & Ngày hết hạn (read-only) -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Ngày bán</label>
+                                    <input type="text" class="form-control" th:value="${#temporals.format(warranty.ngayBan, 'dd/MM/yyyy')}" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Ngày hết hạn bảo hành</label>
+                                    <input type="text" class="form-control" th:value="${#temporals.format(warranty.ngayHetHanBaoHanh, 'dd/MM/yyyy')}" readonly>
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <!-- Trạng thái -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="trangThai" class="form-label">Trạng thái <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="trangThai" name="trangThai" required>
+                                        <option value="Còn hiệu lực" th:selected="${warranty.trangThai == 'Còn hiệu lực'}">Còn hiệu lực</option>
+                                        <option value="Hết hạn" th:selected="${warranty.trangThai == 'Hết hạn'}">Hết hạn</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Tính hợp lệ</label>
+                                    <div>
+                                        <span th:if="${warranty.isStillValid()}" class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Còn hiệu lực
+                                        </span>
+                                        <span th:unless="${warranty.isStillValid()}" class="badge bg-danger">
+                                            <i class="fas fa-times me-1"></i>Hết hạn
+                                        </span>
+                                        <small class="d-block mt-1" th:text="${'Còn ' + warranty.getDaysRemaining() + ' ngày'}">Ngày còn lại</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Ghi chú -->
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="ghiChu" class="form-label">Ghi chú</label>
+                                    <textarea class="form-control" id="ghiChu" name="ghiChu" rows="3" th:text="${warranty.ghiChu}"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="d-grid gap-2 d-sm-flex justify-content-sm-end">
+                                <a th:href="@{/bao-hanh/{id}(id=${warranty.id})}" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-times me-2"></i>Hủy
+                                </a>
+                                <button type="submit" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-save me-2"></i>Cập nhật
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

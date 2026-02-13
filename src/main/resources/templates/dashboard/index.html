@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle}">Tổng quan</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-bottom: 80px; /* Để tránh footer che nội dung */
+        }
+        .navbar-brand {
+            font-weight: bold;
+        }
+        .card {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: none;
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        .stat-card {
+            border-left: 4px solid #007bff;
+        }
+        .stat-card.users {
+            border-left-color: #28a745;
+        }
+        .stat-card.employees {
+            border-left-color: #007bff;
+        }
+        .stat-card.products {
+            border-left-color: #ffc107;
+        }
+        .stat-card.customers {
+            border-left-color: #17a2b8;
+        }
+        .stat-card.suppliers {
+            border-left-color: #6f42c1;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-chart-line me-2"></i>OSS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard" data-nav-dashboard>
+                            <i class="fas fa-tachometer-alt me-1"></i>Tổng quan
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/nhan-vien" data-nav-nhanvien>
+                            <i class="fas fa-users me-1"></i>Nhân viên
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hang-hoa" data-nav-hanghoa>
+                            <i class="fas fa-box me-1"></i>Hàng hóa
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/khach-hang" data-nav-khachhang>
+                            <i class="fas fa-user-friends me-1"></i>Khách hàng
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/nha-phan-phoi" data-nav-nhaphanphoi>
+                            <i class="fas fa-truck me-1"></i>Nhà phân phối
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/bao-hanh" data-nav-baohanh>
+                            <i class="fas fa-shield-alt me-1"></i>Bảo hành
+                        </a>
+                    </li>
+                    <!-- Debt Management Menu -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="debtMenuToggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-money-bill-wave me-1"></i>Quản Lý Công Nợ
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="debtMenuToggle">
+                            <li>
+                                <a class="dropdown-item" href="/cong-no/dashboard">
+                                    <i class="fas fa-chart-pie me-2"></i>Dashboard
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/cong-no/nha-phan-phoi/list">
+                                    <i class="fas fa-building me-2"></i>Nợ Nhà Phân Phối
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/cong-no/khach-hang/list">
+                                    <i class="fas fa-users me-2"></i>Nợ Khách Hàng
+                                </a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/cong-no/lich-su-thanh-toan">
+                                    <i class="fas fa-history me-2"></i>Lịch Sử Thanh Toán
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <!-- End Debt Management Menu -->
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/settings" data-nav-settings>
+                            <i class="fas fa-cog me-1"></i>Cài đặt
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>Người dùng
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/auth/change-password">
+                                <i class="fas fa-key me-2"></i>Đổi mật khẩu
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/auth/logout">
+                                <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Page Title -->
+        <div class="row">
+            <div class="col-12 text-center">
+                <h1 class="mb-4">
+                    <i class="fas fa-chart-line me-3"></i>
+                    <span th:text="${pageTitle}">Tổng quan hệ thống</span>
+                </h1>
+            </div>
+        </div>
+
+
+        <!-- Statistics Cards -->
+        <div class="row g-4 mb-4 justify-content-center">
+            <!-- Users Card -->
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="card stat-card users">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-user-shield fa-2x text-success"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h3 class="mb-0" th:text="${tongSoUsers}">0</h3>
+                                <small class="text-muted">Users hệ thống</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Employees Card -->
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="card stat-card employees">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-users fa-2x text-primary"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h3 class="mb-0" th:text="${tongSoNhanVien}">0</h3>
+                                <small class="text-muted">Nhân viên</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Card -->
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="card stat-card products">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-box fa-2x text-warning"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h3 class="mb-0" th:text="${tongSoHangHoa}">0</h3>
+                                <small class="text-muted">Hàng hóa</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customers Card -->
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="card stat-card customers">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-user-friends fa-2x text-info"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h3 class="mb-0" th:text="${tongSoKhachHang}">0</h3>
+                                <small class="text-muted">Khách hàng</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Suppliers Card -->
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="card stat-card suppliers">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-truck fa-2x text-purple"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h3 class="mb-0" th:text="${tongSoNhaPhanPhoi}">0</h3>
+                                <small class="text-muted">Nhà phân phối</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Quick Actions -->
+        <div class="row g-4 justify-content-center">
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-user-plus fa-3x text-primary mb-3"></i>
+                        <h5>Thêm Nhân viên</h5>
+                        <p class="text-muted">Thêm nhân viên mới vào hệ thống</p>
+                        <a href="/nhan-vien/new" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Thêm mới
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-plus-circle fa-3x text-warning mb-3"></i>
+                        <h5>Thêm Hàng hóa</h5>
+                        <p class="text-muted">Thêm sản phẩm mới</p>
+                        <a href="/hang-hoa/new" class="btn btn-warning">
+                            <i class="fas fa-plus me-2"></i>Thêm mới
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-user-tag fa-3x text-info mb-3"></i>
+                        <h5>Thêm Khách hàng</h5>
+                        <p class="text-muted">Đăng ký khách hàng mới</p>
+                        <a href="/khach-hang/new" class="btn btn-info">
+                            <i class="fas fa-plus me-2"></i>Thêm mới
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-shipping-fast fa-3x text-purple mb-3"></i>
+                        <h5>Thêm Nhà phân phối</h5>
+                        <p class="text-muted">Thêm đối tác mới</p>
+                        <a href="/nha-phan-phoi/new" class="btn btn-outline-primary">
+                            <i class="fas fa-plus me-2"></i>Thêm mới
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-shield-alt fa-3x text-danger mb-3"></i>
+                        <h5>Quản Lý Bảo hành</h5>
+                        <p class="text-muted">Xem danh sách bảo hành</p>
+                        <a href="/bao-hanh" class="btn btn-danger">
+                            <i class="fas fa-list me-2"></i>Xem danh sách
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Thống kê Doanh thu Chi tiết -->
+        <div class="row mt-5">
+            <div class="col-md-4">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <i class="fas fa-chart-line fa-3x text-success mb-3"></i>
+                        <h5>Doanh thu Gộp</h5>
+                        <h3 class="text-success" th:text="${#numbers.formatDecimal(doanhThuGop ?: 0, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</h3>
+                        <small class="text-muted">Tổng từ bán hàng</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card bg-warning text-dark">
+                    <div class="card-body text-center">
+                        <i class="fas fa-undo fa-3x text-danger mb-3"></i>
+                        <h5>Tiền Hoàn trả</h5>
+                        <h3 class="text-danger" th:text="${#numbers.formatDecimal(tongTienTraHang ?: 0, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</h3>
+                        <small class="text-muted">Đã trả khách hàng</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-money-bill-wave fa-3x text-white mb-3"></i>
+                        <h5>Doanh thu Thực tế</h5>
+                        <h3 class="text-white" th:text="${#numbers.formatDecimal(doanhThuThucTe ?: 0, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</h3>
+                        <small>Gộp - Hoàn trả</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Biểu đồ Doanh thu -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-bar me-2"></i>
+                            Doanh thu thực tế tháng <span th:text="${thangHienTai}">10</span>/<span th:text="${namHienTai}">2025</span>
+                            <small class="ms-2">(đã trừ trả hàng)</small>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="revenueChart" height="80"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer cố định -->
+
+    <!-- Bootstrap JS -->
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script th:inline="javascript">
+        // Dữ liệu từ server
+        const ngayList = /*[[${ngayList}]]*/ [];
+        const doanhThuList = /*[[${doanhThuList}]]*/ [];
+        
+        // Tạo biểu đồ
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        const revenueChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ngayList.map(ngay => 'Ngày ' + ngay),
+                datasets: [{
+                    label: 'Doanh thu thực tế (VNĐ)',
+                    data: doanhThuList,
+                    backgroundColor: 'rgba(40, 167, 69, 0.6)',
+                    borderColor: 'rgba(40, 167, 69, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += new Intl.NumberFormat('vi-VN', {
+                                        style: 'currency',
+                                        currency: 'VND'
+                                    }).format(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return new Intl.NumberFormat('vi-VN', {
+                                    style: 'currency',
+                                    currency: 'VND',
+                                    notation: 'compact',
+                                    compactDisplay: 'short'
+                                }).format(value);
+                            }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Set active nav link based on current path
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.navbar-nav a');
+            
+            navLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                if (currentPath.startsWith(href) && href !== '/') {
+                    link.classList.add('active');
+                } else if (href === '/dashboard' && currentPath === '/') {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+    
+    <style>
+        .text-purple {
+            color: #6f42c1 !important;
+        }
+    </style>
+</body>
+</html>

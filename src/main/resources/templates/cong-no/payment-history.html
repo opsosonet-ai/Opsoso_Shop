@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch Sử Thanh Toán</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 100%;
+            background: #667eea;
+        }
+        .timeline-item {
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .timeline-item:nth-child(odd) .timeline-content {
+            margin-left: 0;
+            margin-right: auto;
+            width: 48%;
+            text-align: right;
+        }
+        .timeline-item:nth-child(even) .timeline-content {
+            margin-left: auto;
+            margin-right: 0;
+            width: 48%;
+            text-align: left;
+        }
+        .timeline-marker {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 20px;
+            background: white;
+            border: 4px solid #667eea;
+            border-radius: 50%;
+            top: 0;
+            z-index: 1;
+        }
+        .timeline-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .timeline-content.success {
+            border-left: 4px solid #28a745;
+        }
+        .timeline-content.pending {
+            border-left: 4px solid #ffc107;
+        }
+        .payment-method-badge {
+            display: inline-block;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .payment-method-cash {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .payment-method-transfer {
+            background-color: #cfe2ff;
+            color: #084298;
+        }
+        .payment-method-other {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+        @media (max-width: 768px) {
+            .timeline::before {
+                left: 20px;
+            }
+            .timeline-marker {
+                left: 20px;
+            }
+            .timeline-item:nth-child(odd) .timeline-content,
+            .timeline-item:nth-child(even) .timeline-content {
+                width: 100%;
+                margin: 0;
+                margin-left: 60px;
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Navbar Fragment -->
+<div th:insert="~{cong-no/fragments/navbar.html :: congNoNavbar}"></div>
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="mb-0">
+                <i class="fas fa-history"></i> Lịch Sử Thanh Toán
+            </h1>
+            <p class="text-muted">Chi tiết tất cả các ghi nhận thanh toán và thu hồi công nợ</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#filterModal">
+                <i class="fas fa-filter"></i> Lọc
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <small class="text-muted">Thanh Toán (30 ngày)</small>
+                    <h4 class="text-success mt-2" th:text="${#format.vnd(totalPayments)}">0 VNĐ</h4>
+                    <small class="text-muted">
+                        <i class="fas fa-check"></i> Cho nhà phân phối
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <small class="text-muted">Thu Hồi (30 ngày)</small>
+                    <h4 class="text-info mt-2" th:text="${#format.vnd(collectedAmount30Days)}">0 VNĐ</h4>
+                    <small class="text-muted">
+                        <i class="fas fa-chart-line"></i> Từ nợ khách hàng
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <small class="text-muted">Ghi Nhận Hôm Nay</small>
+                    <h4 class="text-warning mt-2" th:text="${todayPaymentCount}">0</h4>
+                    <small class="text-muted">
+                        <i class="fas fa-calendar"></i> <span th:text="${#format.vnd(todayPaymentAmount)}">0 VNĐ</span>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table View -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-table"></i> Danh Sách Chi Tiết
+                    </h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Ngày</th>
+                                <th>Loại</th>
+                                <th>Mã Phiếu</th>
+                                <th>Bên Liên Quan</th>
+                                <th>Số Tiền</th>
+                                <th>Phương Thức</th>
+                                <th>Người Ghi Nhận</th>
+                                <th>Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="payment : ${payments}">
+                                <td th:text="${#temporals.format(payment.ngayThanhToan, 'dd/MM/yyyy HH:mm')}">01/11/2025 10:30</td>
+                                <td>
+                                    <span th:if="${payment.loaiThanhToan == 'SUPPLIER'}" class="badge bg-info">
+                                        <i class="fas fa-industry"></i> Thanh Toán
+                                    </span>
+                                    <span th:if="${payment.loaiThanhToan == 'CUSTOMER'}" class="badge bg-primary">
+                                        <i class="fas fa-handshake"></i> Thu Hồi
+                                    </span>
+                                </td>
+                                <td>
+                                    <strong th:text="${payment.soPhieu}">PT001</strong>
+                                    <br>
+                                    <small class="text-muted" th:text="${payment.soPhieuGoc}">XC001</small>
+                                </td>
+                                <td th:text="${payment.tenBenLienQuan}">Tên bên liên quan</td>
+                                <td class="text-end text-success fw-bold" th:text="${#format.vnd(payment.soTien)}">0 VNĐ</td>
+                                <td>
+                                    <span th:if="${payment.phuongThuc == 'TIEN_MAT'}" class="badge bg-warning">
+                                        <i class="fas fa-money-bill"></i> Tiền Mặt
+                                    </span>
+                                    <span th:if="${payment.phuongThuc == 'CHUYEN_KHOAN'}" class="badge bg-info">
+                                        <i class="fas fa-university"></i> Chuyển Khoản
+                                    </span>
+                                    <span th:if="${payment.phuongThuc == 'CHI_TIEU'}" class="badge bg-secondary">
+                                        <i class="fas fa-receipt"></i> Chi Tiêu
+                                    </span>
+                                </td>
+                                <td th:text="${payment.nguoiGhiNhan}">Người dùng</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="printPayment(this)">
+                                        <i class="fas fa-print"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-info" onclick="viewPaymentDetails(this)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <div th:if="${totalPages > 1}" class="d-flex justify-content-between align-items-center p-3 border-top">
+                    <div class="text-muted">
+                        <small>Hiển thị <strong th:text="${(currentPage - 1) * pageSize + 1}">1</strong> đến 
+                        <strong th:text="${currentPage == totalPages ? paymentCount : currentPage * pageSize}">15</strong> 
+                        trong tổng số <strong th:text="${paymentCount}">100</strong> ghi nhận</small>
+                    </div>
+                    <nav>
+                        <ul class="pagination mb-0 gap-1">
+                            <!-- Previous -->
+                            <li th:classappend="${currentPage == 1 ? 'disabled' : ''}">
+                                <a th:href="${currentPage > 1 ? '/cong-no/lich-su-thanh-toan?page=' + (currentPage - 1) : '#'}" 
+                                   class="page-link">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                            
+                            <!-- Page numbers -->
+                            <li th:each="p : ${#numbers.sequence(1, totalPages)}" 
+                                th:classappend="${p == currentPage ? 'active' : ''}">
+                                <a th:href="${'/cong-no/lich-su-thanh-toan?page=' + p}" 
+                                   class="page-link" th:text="${p}">1</a>
+                            </li>
+                            
+                            <!-- Next -->
+                            <li th:classappend="${currentPage == totalPages ? 'disabled' : ''}">
+                                <a th:href="${currentPage < totalPages ? '/cong-no/lich-su-thanh-toan?page=' + (currentPage + 1) : '#'}" 
+                                   class="page-link">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline View -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock"></i> Dòng Thời Gian Thanh Toán
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item" th:each="payment : ${payments}">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content" th:classappend="'success'">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="text-start">
+                                        <h6 class="mb-1">
+                                            <span th:if="${payment.loaiThanhToan == 'SUPPLIER'}">
+                                                <i class="fas fa-industry"></i> Thanh Toán Nhà Phân Phối
+                                            </span>
+                                            <span th:if="${payment.loaiThanhToan == 'CUSTOMER'}">
+                                                <i class="fas fa-handshake"></i> Thu Hồi Khách Hàng
+                                            </span>
+                                        </h6>
+                                        <p class="mb-2 text-muted">
+                                            <strong th:text="${payment.tenBenLienQuan}">Tên bên</strong>
+                                        </p>
+                                    </div>
+                                    <div class="text-end">
+                                        <h5 class="text-success mb-0" th:text="${#format.vnd(payment.soTien)}">0 VNĐ</h5>
+                                    </div>
+                                </div>
+                                
+                                <hr class="my-2">
+                                
+                                <div class="row mt-3">
+                                    <div class="col-md-6">
+                                        <small class="text-muted">Mã Phiếu</small>
+                                        <p class="mb-2" th:text="${payment.soPhieu}">PT001</p>
+                                        
+                                        <small class="text-muted">Mã Công Nợ</small>
+                                        <p class="mb-2" th:text="${payment.soPhieuGoc}">XC001</p>
+                                        
+                                        <small class="text-muted">Phương Thức</small>
+                                        <p class="mb-0">
+                                            <span th:if="${payment.phuongThuc == 'TIEN_MAT'}" class="payment-method-badge payment-method-cash">
+                                                <i class="fas fa-money-bill"></i> Tiền Mặt
+                                            </span>
+                                            <span th:if="${payment.phuongThuc == 'CHUYEN_KHOAN'}" class="payment-method-badge payment-method-transfer">
+                                                <i class="fas fa-university"></i> Chuyển Khoản
+                                            </span>
+                                            <span th:if="${payment.phuongThuc == 'CHI_TIEU'}" class="payment-method-badge payment-method-other">
+                                                <i class="fas fa-receipt"></i> Chi Tiêu
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <small class="text-muted">Ngày Thanh Toán</small>
+                                        <p class="mb-2" th:text="${#temporals.format(payment.ngayThanhToan, 'dd/MM/yyyy HH:mm')}">01/11/2025 10:30</p>
+                                        
+                                        <small class="text-muted">Người Ghi Nhận</small>
+                                        <p class="mb-2" th:text="${payment.nguoiGhiNhan}">Người dùng</p>
+                                        
+                                        <small class="text-muted">Ghi Chú</small>
+                                        <p class="mb-0 text-muted" th:text="${payment.ghiChu}">Ghi chú thêm</p>
+                                    </div>
+                                </div>
+
+                                <div class="mt-3">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="printPayment(this)">
+                                        <i class="fas fa-print"></i> In
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="viewPaymentDetails(this)">
+                                        <i class="fas fa-eye"></i> Chi Tiết
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div th:if="${#lists.isEmpty(payments)}" class="text-center py-5 text-muted">
+                            <i class="fas fa-inbox" style="font-size: 3rem;"></i>
+                            <p class="mt-3">Không có ghi nhận thanh toán nào</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Modal -->
+<div class="modal fade" id="filterModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-filter"></i> Bộ Lọc
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="filterForm" method="GET" action="/cong-no/lich-su-thanh-toan">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Loại Ghi Nhận:</label>
+                        <select class="form-control" name="type">
+                            <option value="">-- Tất Cả --</option>
+                            <option value="SUPPLIER">Thanh Toán Nhà Phân Phối</option>
+                            <option value="CUSTOMER">Thu Hồi Khách Hàng</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phương Thức:</label>
+                        <select class="form-control" name="method">
+                            <option value="">-- Tất Cả --</option>
+                            <option value="TIEN_MAT">Tiền Mặt</option>
+                            <option value="CHUYEN_KHOAN">Chuyển Khoản</option>
+                            <option value="CHI_TIEU">Chi Tiêu</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Từ Ngày:</label>
+                        <input type="date" class="form-control" name="fromDate">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Đến Ngày:</label>
+                        <input type="date" class="form-control" name="toDate">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Số Tiền Tối Thiểu:</label>
+                        <input type="number" class="form-control" name="minAmount" placeholder="0">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Số Tiền Tối Đa:</label>
+                        <input type="number" class="form-control" name="maxAmount" placeholder="9999999999">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Lọc
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Details Modal -->
+<div class="modal fade" id="paymentDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-receipt"></i> Chi Tiết Thanh Toán
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="paymentDetailsContent">
+                <!-- Content will be filled dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary" onclick="printCurrentPayment()">
+                    <i class="fas fa-print"></i> In
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let currentPaymentData = null;
+
+    function getPaymentRowData(button) {
+        const row = button.closest('tr') || button.closest('.timeline-item');
+        if (!row) return null;
+
+        const cells = row.querySelectorAll('td, .timeline-content');
+        const paymentData = {
+            ngayThanhToan: row.querySelector('td:first-child')?.textContent?.trim() || 'N/A',
+            loaiThanhToan: row.querySelector('.badge')?.textContent?.trim() || 'N/A',
+            soPhieu: row.querySelectorAll('td')[2]?.textContent?.trim() || 'N/A',
+            tenBenLienQuan: row.querySelectorAll('td')[3]?.textContent?.trim() || 'N/A',
+            soTien: row.querySelectorAll('td')[4]?.textContent?.trim() || '0 VNĐ',
+            phuongThuc: row.querySelectorAll('td')[5]?.querySelector('.badge')?.textContent?.trim() || 'N/A',
+            nguoiGhiNhan: row.querySelectorAll('td')[6]?.textContent?.trim() || 'N/A'
+        };
+        return paymentData;
+    }
+
+    function printPayment(button) {
+        const paymentData = getPaymentRowData(button);
+        if (!paymentData) return;
+
+        const printWindow = window.open('', '', 'height=600,width=800');
+        const loaiText = paymentData.loaiThanhToan.includes('Thanh Toán') ? 'THANH TOÁN NHÀ PHÂN PHỐI' : 'THU HỒI KHÁCH HÀNG';
+        
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>In Phiếu Thanh Toán</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 40px; }
+                    .header { text-align: center; margin-bottom: 30px; }
+                    .header h1 { margin: 0; font-size: 24px; }
+                    .header p { margin: 5px 0; color: #666; }
+                    .details { margin: 20px 0; }
+                    .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+                    .detail-label { font-weight: bold; width: 30%; }
+                    .detail-value { width: 70%; text-align: right; }
+                    .amount { font-size: 20px; font-weight: bold; color: #28a745; margin-top: 15px; }
+                    .footer { text-align: center; margin-top: 40px; color: #999; font-size: 12px; }
+                    @media print {
+                        body { margin: 0; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>${loaiText}</h1>
+                    <p>Ngày in: ${new Date().toLocaleString('vi-VN')}</p>
+                </div>
+                
+                <div class="details">
+                    <div class="detail-row">
+                        <div class="detail-label">Mã Phiếu:</div>
+                        <div class="detail-value">${paymentData.soPhieu}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Bên Liên Quan:</div>
+                        <div class="detail-value">${paymentData.tenBenLienQuan}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Ngày Thanh Toán:</div>
+                        <div class="detail-value">${paymentData.ngayThanhToan}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Phương Thức:</div>
+                        <div class="detail-value">${paymentData.phuongThuc}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Người Ghi Nhận:</div>
+                        <div class="detail-value">${paymentData.nguoiGhiNhan}</div>
+                    </div>
+                    <div class="detail-row amount">
+                        <div class="detail-label">Số Tiền:</div>
+                        <div class="detail-value">${paymentData.soTien}</div>
+                    </div>
+                </div>
+                
+                <div class="footer">
+                    <p>Phiếu này được in từ hệ thống quản lý công nợ</p>
+                </div>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+    }
+
+    function viewPaymentDetails(button) {
+        const paymentData = getPaymentRowData(button);
+        if (!paymentData) return;
+
+        const loaiIcon = paymentData.loaiThanhToan.includes('Thanh Toán') ? 
+            '<i class="fas fa-industry" style="color: #0d6efd;"></i>' : 
+            '<i class="fas fa-handshake" style="color: #0d6efd;"></i>';
+
+        const detailsHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Loại Ghi Nhận</small>
+                        <p class="mb-0">
+                            ${loaiIcon} 
+                            <strong>${paymentData.loaiThanhToan}</strong>
+                        </p>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Mã Phiếu</small>
+                        <p class="mb-0"><strong>${paymentData.soPhieu}</strong></p>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Bên Liên Quan</small>
+                        <p class="mb-0">${paymentData.tenBenLienQuan}</p>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Phương Thức Thanh Toán</small>
+                        <p class="mb-0"><strong>${paymentData.phuongThuc}</strong></p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Ngày Thanh Toán</small>
+                        <p class="mb-0"><strong>${paymentData.ngayThanhToan}</strong></p>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Người Ghi Nhận</small>
+                        <p class="mb-0">${paymentData.nguoiGhiNhan}</p>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Số Tiền</small>
+                        <p class="mb-0 fs-5"><strong class="text-success">${paymentData.soTien}</strong></p>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="alert alert-info mb-0">
+                <i class="fas fa-info-circle"></i> 
+                <small>Chi tiết ghi nhận thanh toán/thu hồi công nợ</small>
+            </div>
+        `;
+
+        document.getElementById('paymentDetailsContent').innerHTML = detailsHTML;
+        currentPaymentData = paymentData;
+        new bootstrap.Modal(document.getElementById('paymentDetailsModal')).show();
+    }
+
+    function printCurrentPayment() {
+        if (!currentPaymentData) return;
+        
+        const printWindow = window.open('', '', 'height=600,width=800');
+        const loaiText = currentPaymentData.loaiThanhToan.includes('Thanh Toán') ? 'THANH TOÁN NHÀ PHÂN PHỐI' : 'THU HỒI KHÁCH HÀNG';
+        
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>In Phiếu Thanh Toán</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 40px; }
+                    .header { text-align: center; margin-bottom: 30px; }
+                    .header h1 { margin: 0; font-size: 24px; }
+                    .header p { margin: 5px 0; color: #666; }
+                    .details { margin: 20px 0; }
+                    .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+                    .detail-label { font-weight: bold; width: 30%; }
+                    .detail-value { width: 70%; text-align: right; }
+                    .amount { font-size: 20px; font-weight: bold; color: #28a745; margin-top: 15px; }
+                    .footer { text-align: center; margin-top: 40px; color: #999; font-size: 12px; }
+                    @media print {
+                        body { margin: 0; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>${loaiText}</h1>
+                    <p>Ngày in: ${new Date().toLocaleString('vi-VN')}</p>
+                </div>
+                
+                <div class="details">
+                    <div class="detail-row">
+                        <div class="detail-label">Mã Phiếu:</div>
+                        <div class="detail-value">${currentPaymentData.soPhieu}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Bên Liên Quan:</div>
+                        <div class="detail-value">${currentPaymentData.tenBenLienQuan}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Ngày Thanh Toán:</div>
+                        <div class="detail-value">${currentPaymentData.ngayThanhToan}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Phương Thức:</div>
+                        <div class="detail-value">${currentPaymentData.phuongThuc}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Người Ghi Nhận:</div>
+                        <div class="detail-value">${currentPaymentData.nguoiGhiNhan}</div>
+                    </div>
+                    <div class="detail-row amount">
+                        <div class="detail-label">Số Tiền:</div>
+                        <div class="detail-value">${currentPaymentData.soTien}</div>
+                    </div>
+                </div>
+                
+                <div class="footer">
+                    <p>Phiếu này được in từ hệ thống quản lý công nợ</p>
+                </div>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+    }
+</script>
+</body>
+</html>

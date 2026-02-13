@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">Emergency Database Configuration</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .emergency-header {
+            background: linear-gradient(135deg, #dc3545, #fd7e14);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        .os-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 1rem;
+        }
+        .windows-badge { background-color: #0078d4; color: white; }
+        .linux-badge { background-color: #f7931e; color: white; }
+        .config-card {
+            border: 2px solid #dc3545;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.2);
+        }
+        .form-control:focus {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Emergency Header -->
+    <div class="emergency-header text-center">
+        <div class="container">
+            <h1><i class="fas fa-exclamation-triangle me-3"></i>Emergency Database Setup</h1>
+            <p class="mb-1">Configure database connection when normal startup fails</p>
+            <span th:if="${isWindows}" class="os-badge windows-badge">
+                <i class="fab fa-windows me-2"></i>Windows Detected
+            </span>
+            <span th:if="${isLinux}" class="os-badge linux-badge">
+                <i class="fab fa-linux me-2"></i>Linux Detected
+            </span>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Success/Error Messages -->
+        <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <strong>Success!</strong> Database configuration updated successfully!
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        
+        <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-times-circle me-2"></i>
+            <strong>Error!</strong> Failed to update database configuration.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card config-card">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-database me-2"></i>Database Configuration
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/emergency/configure}" method="post">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <label for="host" class="form-label">
+                                        <i class="fas fa-server me-2"></i>Database Host
+                                    </label>
+                                    <input type="text" class="form-control" id="host" name="host" 
+                                           value="localhost" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="port" class="form-label">
+                                        <i class="fas fa-network-wired me-2"></i>Port
+                                    </label>
+                                    <input type="number" class="form-control" id="port" name="port" 
+                                           value="3306" required>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3 mt-3">
+                                <label for="database" class="form-label">
+                                    <i class="fas fa-database me-2"></i>Database Name
+                                </label>
+                                <input type="text" class="form-control" id="database" name="database" 
+                                       value="oss" required>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="username" class="form-label">
+                                        <i class="fas fa-user me-2"></i>Username
+                                    </label>
+                                    <input type="text" class="form-control" id="username" name="username" 
+                                           value="oss_app" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="password" class="form-label">
+                                        <i class="fas fa-key me-2"></i>Password
+                                    </label>
+                                    <input type="password" class="form-control" id="password" name="password" required>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="/" class="btn btn-outline-secondary me-md-2">
+                                    <i class="fas fa-home me-2"></i>Back to Home
+                                </a>
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-save me-2"></i>Update Configuration
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Platform-specific Instructions -->
+                <div class="mt-4">
+                    <div th:if="${isWindows}" class="card border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <i class="fab fa-windows me-2"></i>Windows Instructions
+                        </div>
+                        <div class="card-body">
+                            <h6>Common Windows MariaDB/MySQL Settings:</h6>
+                            <ul class="mb-3">
+                                <li><strong>XAMPP:</strong> Username: <code>root</code>, Password: <em>(usually empty)</em></li>
+                                <li><strong>WAMP:</strong> Username: <code>root</code>, Password: <em>(usually empty)</em></li>
+                                <li><strong>Laragon:</strong> Username: <code>root</code>, Password: <em>(usually empty)</em></li>
+                                <li><strong>Manual Install:</strong> Check your installation notes</li>
+                            </ul>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Tip:</strong> If you forgot your password, you can reset it using MySQL/MariaDB command line tools.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div th:if="${isLinux}" class="card border-success">
+                        <div class="card-header bg-success text-white">
+                            <i class="fab fa-linux me-2"></i>Linux Instructions
+                        </div>
+                        <div class="card-body">
+                            <h6>Common Linux MariaDB/MySQL Commands:</h6>
+                            <div class="bg-dark text-light p-3 rounded">
+                                <code>
+                                    # Check MariaDB status<br>
+                                    sudo systemctl status mariadb<br><br>
+                                    # Connect to MariaDB<br>
+                                    mysql -u root -p<br><br>
+                                    # Create user for application<br>
+                                    CREATE USER 'oss_app'@'localhost' IDENTIFIED BY 'your_password';<br>
+                                    GRANT ALL PRIVILEGES ON oss.* TO 'oss_app'@'localhost';<br>
+                                    FLUSH PRIVILEGES;
+                                </code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Restart Guide Link -->
+                <div class="text-center mt-4">
+                    <a href="/emergency/restart-guide" class="btn btn-outline-warning">
+                        <i class="fas fa-redo me-2"></i>View Application Restart Guide
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

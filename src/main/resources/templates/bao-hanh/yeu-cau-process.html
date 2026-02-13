@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title>Xử lý Yêu cầu Bảo hành</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .form-card {
+            border-left: 4px solid #ff9800;
+        }
+        .info-badge {
+            padding: 0.5rem 1rem;
+            background-color: #e3f2fd;
+            border-left: 3px solid #2196f3;
+            border-radius: 0.25rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-chart-line me-2"></i>OSS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt me-1"></i>Tổng quan
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/bao-hanh/yeu-cau/list">
+                            <i class="fas fa-list me-1"></i>Danh sách Yêu cầu
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1>
+                    <i class="fas fa-wrench me-2"></i>Xử lý Yêu cầu Bảo hành
+                </h1>
+                <p class="text-muted">Cập nhật trạng thái và xử lý yêu cầu bảo hành</p>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <!-- Claim Status -->
+                <div class="info-badge">
+                    <strong>Trạng thái yêu cầu:</strong>
+                    <span th:if="${claim != null and claim.trangThai == 'Chờ xử lý'}" class="badge bg-warning text-dark ms-2">
+                        <i class="fas fa-hourglass-start me-1"></i>Chờ xử lý
+                    </span>
+                    <span th:if="${claim != null and claim.trangThai == 'Đang xử lý'}" class="badge bg-info ms-2">
+                        <i class="fas fa-spinner me-1"></i>Đang xử lý
+                    </span>
+                    <span th:if="${claim != null and claim.trangThai == 'Hoàn thành'}" class="badge bg-success ms-2">
+                        <i class="fas fa-check me-1"></i>Hoàn thành
+                    </span>
+                </div>
+
+                <!-- Claim Details Card -->
+                <div class="card mb-3">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Thông tin Yêu cầu
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label"><strong>Khách hàng</strong></label>
+                                <p th:text="${claim != null and claim.warranty != null and claim.warranty.khachHang != null ? claim.warranty.khachHang.hoTen : 'N/A'}">N/A</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label"><strong>Khách hàng</strong></label>
+                                <p th:text="${claim != null and claim.warranty != null and claim.warranty.khachHang != null ? claim.warranty.khachHang.tenKhachHang : 'N/A'}">N/A</p>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label"><strong>Loại lỗi</strong></label>
+                                <p th:text="${claim != null ? claim.loaiLoi : 'N/A'}">N/A</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label"><strong>Ngày yêu cầu</strong></label>
+                                <p th:text="${claim != null ? #temporals.format(claim.ngayYeuCau, 'dd/MM/yyyy') : 'N/A'}">N/A</p>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label class="form-label"><strong>Mô tả vấn đề</strong></label>
+                                <p th:text="${claim != null ? claim.moTaVanDe : 'N/A'}">N/A</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Processing Form -->
+                <div class="card form-card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="fas fa-edit me-2"></i>Xử lý Yêu cầu
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/bao-hanh/yeu-cau/{id}/update(id=${claim != null ? claim.id : ''})}" method="POST">
+                            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+
+                            <!-- Status -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="trangThai" class="form-label">Trạng thái <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="trangThai" name="trangThai" required>
+                                        <option value="">-- Chọn trạng thái --</option>
+                                        <option value="Chờ xử lý" th:selected="${claim != null and claim.trangThai == 'Chờ xử lý'}">Chờ xử lý</option>
+                                        <option value="Đang xử lý" th:selected="${claim != null and claim.trangThai == 'Đang xử lý'}">Đang xử lý</option>
+                                        <option value="Hoàn thành" th:selected="${claim != null and claim.trangThai == 'Hoàn thành'}">Hoàn thành</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="trangThaiXuly" class="form-label">Hình thức xử lý</label>
+                                    <select class="form-select" id="trangThaiXuly" name="trangThaiXuly">
+                                        <option value="">-- Chọn hình thức --</option>
+                                        <option value="Sửa chữa" th:selected="${claim != null and claim.trangThaiXuly == 'Sửa chữa'}">Sửa chữa</option>
+                                        <option value="Thay thế" th:selected="${claim != null and claim.trangThaiXuly == 'Thay thế'}">Thay thế</option>
+                                        <option value="Hoàn tiền" th:selected="${claim != null and claim.trangThaiXuly == 'Hoàn tiền'}">Hoàn tiền</option>
+                                        <option value="Từ chối" th:selected="${claim != null and claim.trangThaiXuly == 'Từ chối'}">Từ chối</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Processing Dates -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="ngayNhanSuLy" class="form-label">Ngày nhận xử lý</label>
+                                    <input type="date" class="form-control" id="ngayNhanSuLy" name="ngayNhanSuLy" th:value="${claim != null ? claim.ngayNhanSuLy : ''}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="ngayHoanThanh" class="form-label">Ngày hoàn thành</label>
+                                    <input type="date" class="form-control" id="ngayHoanThanh" name="ngayHoanThanh" th:value="${claim != null ? claim.ngayHoanThanh : ''}">
+                                </div>
+                            </div>
+
+                            <!-- Notes -->
+                            <div class="mb-3">
+                                <label for="ghiChuXuly" class="form-label">Ghi chú xử lý</label>
+                                <textarea class="form-control" id="ghiChuXuly" name="ghiChuXuly" rows="3" th:text="${claim != null ? claim.ghiChuXuly : ''}"></textarea>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="d-grid gap-2 d-sm-flex justify-content-sm-end">
+                                <a href="/bao-hanh/yeu-cau/list" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-times me-2"></i>Hủy
+                                </a>
+                                <button type="submit" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-save me-2"></i>Cập nhật
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

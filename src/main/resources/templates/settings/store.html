@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cài đặt thông tin cửa hàng</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .settings-card {
+            border: none;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            border-radius: 15px;
+        }
+        .settings-card .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 20px;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+        }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/dashboard">
+                <i class="fas fa-store me-2"></i>OSS
+            </a>
+            <div class="navbar-nav ms-auto">
+                <ul class="navbar-nav me-3">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt me-1"></i>Tổng quan
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/settings">
+                            <i class="fas fa-cog me-1"></i>Database
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/settings/store">
+                            <i class="fas fa-store me-1"></i>Cửa hàng
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/users">
+                            <i class="fas fa-user-lock me-1"></i>Người dùng
+                        </a>
+                    </li>
+                </ul>
+                <span class="navbar-text text-white">
+                    <i class="fas fa-user me-2"></i><span th:text="${currentUser}">User</span>
+                    (<span th:text="${currentUserRole}">Role</span>)
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-5 mb-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Flash Messages -->
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i><span th:text="${successMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i><span th:text="${errorMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <!-- Settings Card -->
+                <div class="card settings-card">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i class="fas fa-store me-2"></i>Cài đặt thông tin cửa hàng
+                        </h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="info-box">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Lưu ý:</strong> 
+                            <ul class="mb-0 mt-2">
+                                <li>Thông tin này sẽ hiển thị trên các phiếu xuất hàng và báo cáo</li>
+                                <li>Các trường có dấu (*) là bắt buộc</li>
+                                <li>Logo cửa hàng (nếu có) sẽ được hiển thị trên phiếu in</li>
+                            </ul>
+                        </div>
+
+                        <form th:action="@{/settings/store/save}" method="post" th:object="${storeInfo}">
+                            <input type="hidden" th:field="*{id}">
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="storeName" class="form-label">
+                                        <i class="fas fa-store me-2"></i>Tên cửa hàng (*)
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="storeName" 
+                                           th:field="*{storeName}" 
+                                           required
+                                           placeholder="Nhập tên cửa hàng">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="phone" class="form-label">
+                                        <i class="fas fa-phone me-2"></i>Số điện thoại
+                                    </label>
+                                    <input type="tel" 
+                                           class="form-control" 
+                                           id="phone" 
+                                           th:field="*{phone}" 
+                                           placeholder="0123-456-789">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="address" class="form-label">
+                                    <i class="fas fa-map-marker-alt me-2"></i>Địa chỉ
+                                </label>
+                                <textarea class="form-control" 
+                                          id="address" 
+                                          th:field="*{address}" 
+                                          rows="2"
+                                          placeholder="Nhập địa chỉ cửa hàng"></textarea>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="email" class="form-label">
+                                        <i class="fas fa-envelope me-2"></i>Email
+                                    </label>
+                                    <input type="email" 
+                                           class="form-control" 
+                                           id="email" 
+                                           th:field="*{email}" 
+                                           placeholder="info@cuahang.com">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="taxCode" class="form-label">
+                                        <i class="fas fa-file-invoice me-2"></i>Mã số thuế
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="taxCode" 
+                                           th:field="*{taxCode}" 
+                                           placeholder="1234567890">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="businessLicense" class="form-label">
+                                    <i class="fas fa-certificate me-2"></i>Giấy phép kinh doanh
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="businessLicense" 
+                                       th:field="*{businessLicense}" 
+                                       placeholder="Số giấy phép kinh doanh">
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="logoPath" class="form-label">
+                                    <i class="fas fa-image me-2"></i>Đường dẫn Logo
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="logoPath" 
+                                       th:field="*{logoPath}" 
+                                       placeholder="/images/logo.png">
+                                <div class="form-text">Đường dẫn đến file logo (để trống nếu không có)</div>
+                            </div>
+                            
+                            <!-- Preview Section -->
+                            <div class="card bg-light mb-4">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-eye me-2"></i>Xem trước thông tin</h6>
+                                </div>
+                                <div class="card-body text-center">
+                                    <div class="store-preview">
+                                        <h5 class="fw-bold text-primary" id="preview-name" th:text="${storeInfo.storeName}">CỬA HÀNG ABC</h5>
+                                        <div class="small text-muted">
+                                            <div id="preview-address" th:text="${storeInfo.address}">123 Đường ABC, Quận 1, TP.HCM</div>
+                                            <div>
+                                                <span id="preview-phone" th:text="${storeInfo.phone}">0123-456-789</span> | 
+                                                <span id="preview-email" th:text="${storeInfo.email}">info@cuahang.com</span>
+                                            </div>
+                                            <div id="preview-tax" th:text="'MST: ' + ${storeInfo.taxCode}">MST: 1234567890</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Buttons -->
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Lưu thông tin
+                                </button>
+                                <a href="/settings" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Quay lại
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Live preview update
+        document.addEventListener('DOMContentLoaded', function() {
+            const storeNameInput = document.getElementById('storeName');
+            const addressInput = document.getElementById('address');
+            const phoneInput = document.getElementById('phone');
+            const emailInput = document.getElementById('email');
+            const taxCodeInput = document.getElementById('taxCode');
+            
+            const previewName = document.getElementById('preview-name');
+            const previewAddress = document.getElementById('preview-address');
+            const previewPhone = document.getElementById('preview-phone');
+            const previewEmail = document.getElementById('preview-email');
+            const previewTax = document.getElementById('preview-tax');
+            
+            function updatePreview() {
+                previewName.textContent = storeNameInput.value || 'CỬA HÀNG ABC';
+                previewAddress.textContent = addressInput.value || '123 Đường ABC, Quận 1, TP.HCM';
+                previewPhone.textContent = phoneInput.value || '0123-456-789';
+                previewEmail.textContent = emailInput.value || 'info@cuahang.com';
+                previewTax.textContent = 'MST: ' + (taxCodeInput.value || '1234567890');
+            }
+            
+            storeNameInput.addEventListener('input', updatePreview);
+            addressInput.addEventListener('input', updatePreview);
+            phoneInput.addEventListener('input', updatePreview);
+            emailInput.addEventListener('input', updatePreview);
+            taxCodeInput.addEventListener('input', updatePreview);
+        });
+    </script>
+</body>
+</html>

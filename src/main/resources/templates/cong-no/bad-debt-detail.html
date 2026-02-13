@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi Tiết Nợ Không Thể Thu Hồi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .detail-label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .detail-value {
+            font-size: 1.1rem;
+            margin-bottom: 0;
+        }
+        .detail-row {
+            padding: 1rem 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .uncollectible-badge {
+            display: inline-block;
+            background-color: #dc3545;
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+        }
+        .timeline {
+            list-style: none;
+            padding: 0;
+        }
+        .timeline-item {
+            padding-left: 2rem;
+            padding-bottom: 2rem;
+            position: relative;
+        }
+        .timeline-item:before {
+            content: '';
+            width: 12px;
+            height: 12px;
+            background: #dc3545;
+            border: 3px solid white;
+            border-radius: 50%;
+            position: absolute;
+            left: 0;
+            top: 0;
+            box-shadow: 0 0 0 2px #dee2e6;
+        }
+        .timeline-item:after {
+            content: '';
+            width: 2px;
+            height: calc(100% + 1rem);
+            background: #dee2e6;
+            position: absolute;
+            left: 5px;
+            top: 1rem;
+        }
+        .timeline-item:last-child:after {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<!-- Navbar Fragment -->
+<div th:insert="~{cong-no/fragments/navbar.html :: congNoNavbar}"></div>
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="mb-0">
+                <i class="fas fa-info-circle"></i> Chi Tiết Nợ Không Thể Thu Hồi
+            </h1>
+            <p class="text-muted">Xem thông tin chi tiết về khoản nợ xấu</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="/cong-no/no-khong-the-thu-hoi/list" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </a>
+        </div>
+    </div>
+
+    <!-- Detail Section -->
+    <div class="row mb-4">
+        <div class="col-md-8 offset-md-2">
+            <!-- Customer Info Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user"></i> Thông Tin Khách Hàng
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <p class="detail-label">Tên Khách Hàng</p>
+                                <p class="detail-value" th:text="${debt.khachHang.hoTen}">N/A</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <p class="detail-label">Số Điện Thoại</p>
+                                <p class="detail-value" th:text="${debt.khachHang.soDienThoai}">N/A</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <p class="detail-label">Địa Chỉ</p>
+                                <p class="detail-value" th:text="${debt.khachHang.diaChi}">N/A</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <p class="detail-label">Email</p>
+                                <p class="detail-value" th:text="${debt.khachHang.email}">N/A</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Debt Info Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-invoice"></i> Thông Tin Công Nợ
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <p class="detail-label">Mã Phiếu Xuất Bán</p>
+                                <p class="detail-value" th:text="${debt.soPhieuXuatBan}">N/A</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <p class="detail-label">Ngày Lập</p>
+                                <p class="detail-value" th:text="${#temporals.format(debt.ngayTaoNo, 'dd/MM/yyyy HH:mm')}">N/A</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="detail-row">
+                                <p class="detail-label">Nợ Ban Đầu</p>
+                                <p class="detail-value text-success" th:text="${#format.vnd(debt.tongTienNo)}">0 VNĐ</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="detail-row">
+                                <p class="detail-label">Đã Thu Hồi</p>
+                                <p class="detail-value text-info" th:text="${#format.vnd(debt.tongTienDaThanhToan)}">0 VNĐ</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="detail-row">
+                                <p class="detail-label">Nợ Còn Lại</p>
+                                <p class="detail-value text-danger" th:text="${#format.vnd(debt.tongTienConNo)}">0 VNĐ</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bad Debt Info Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> Thông Tin Nợ Xấu
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <span class="uncollectible-badge">
+                                <i class="fas fa-ban"></i> NỢ KHÔNG THỂ THU HỒI
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <p class="detail-label">Số Tiền Nợ Xấu</p>
+                                <p class="detail-value text-danger" th:text="${#format.vnd(debt.uncollectibleAmount)}">0 VNĐ</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-row">
+                                <p class="detail-label">Tỉ Lệ Xấu</p>
+                                <p class="detail-value text-danger">
+                                    <span th:text="${T(java.math.BigDecimal).valueOf(debt.uncollectibleAmount.doubleValue() * 100 / debt.tongTienConNo.doubleValue()).setScale(2, T(java.math.RoundingMode).HALF_UP)}">0</span>%
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="detail-row">
+                                <p class="detail-label">Lý Do Không Thể Thu Hồi</p>
+                                <p class="detail-value" th:text="${debt.uncollectibleReason}">N/A</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <a href="/cong-no/no-khong-the-thu-hoi/[[${debt.id}]]/form" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Sửa
+                    </a>
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        <i class="fas fa-trash"></i> Xóa Nợ Xấu
+                    </button>
+                    <a href="/cong-no/no-khong-the-thu-hoi/list" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Quay lại
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-trash"></i> Xóa Nợ Xấu
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa nợ xấu này?</p>
+                <p class="text-muted">
+                    Hành động này sẽ xóa <strong th:text="${#format.vnd(debt.uncollectibleAmount)}">0 VNĐ</strong> 
+                    từ danh sách nợ không thể thu hồi và trả lại trạng thái bình thường cho khoản nợ này.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Hủy
+                </button>
+                <form th:action="${'/cong-no/no-khong-the-thu-hoi/' + debt.id + '/delete'}" method="POST" style="display:inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-check"></i> Xác Nhận
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

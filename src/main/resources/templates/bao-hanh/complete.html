@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title>Hoàn Thành Bảo Hành</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .card-header {
+            border-bottom: 3px solid #28a745;
+        }
+        .warranty-info {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-chart-line me-2"></i>OSS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt me-1"></i>Tổng quan
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/bao-hanh">
+                            <i class="fas fa-shield-alt me-1"></i>Bảo hành
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <!-- Page Header -->
+                <div class="mb-4">
+                    <h1 class="mb-3">
+                        <i class="fas fa-check-circle text-success me-2"></i>Hoàn Thành Bảo Hành
+                    </h1>
+                    <a href="/bao-hanh" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left me-2"></i>Quay lại
+                    </a>
+                </div>
+
+                <!-- Warranty Info Card -->
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Thông tin Bảo hành
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="warranty-info">
+                            <div class="row mb-2">
+                                <div class="col-sm-3">
+                                    <strong>ID:</strong>
+                                </div>
+                                <div class="col-sm-9">
+                                    <span th:text="${warranty.id}" class="badge bg-primary">#</span>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-sm-3">
+                                    <strong>Hàng hóa:</strong>
+                                </div>
+                                <div class="col-sm-9">
+                                    <span th:text="${warranty.hangHoa != null ? warranty.hangHoa.tenHangHoa : 'N/A'}">N/A</span>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-sm-3">
+                                    <strong>Khách hàng:</strong>
+                                </div>
+                                <div class="col-sm-9">
+                                    <span th:text="${warranty.khachHang?.hoTen}">N/A</span>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-sm-3">
+                                    <strong>Ngày bán:</strong>
+                                </div>
+                                <div class="col-sm-9">
+                                    <span th:text="${#temporals.format(warranty.ngayBan, 'dd/MM/yyyy')}">N/A</span>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-sm-3">
+                                    <strong>Ngày hết hạn:</strong>
+                                </div>
+                                <div class="col-sm-9">
+                                    <span th:text="${#temporals.format(warranty.ngayHetHanBaoHanh, 'dd/MM/yyyy')}">N/A</span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <strong>Trạng thái:</strong>
+                                </div>
+                                <div class="col-sm-9">
+                                    <span th:if="${warranty.isStillValid()}" class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i>Còn hiệu lực
+                                    </span>
+                                    <span th:unless="${warranty.isStillValid()}" class="badge bg-warning">
+                                        <i class="fas fa-exclamation me-1"></i>Hết hạn
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Completion Form -->
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-clipboard-check me-2"></i>Xác Nhận Hoàn Thành
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info" role="alert">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Chú ý:</strong> Khi hoàn thành bảo hành, hệ thống sẽ:
+                            <ul class="mb-0 mt-2">
+                                <li>Cập nhật trạng thái thành "Hoàn thành"</li>
+                                <li>Tự động thêm bước "Trả thiết bị cho khách hàng" vào quy trình</li>
+                                <li>Ghi lại ngày giờ hoàn thành</li>
+                            </ul>
+                        </div>
+
+                        <form method="POST" th:action="@{/bao-hanh/{id}/hoan-thanh(id=${warranty.id})}">
+                            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+
+                            <!-- Notes Field -->
+                            <div class="mb-4">
+                                <label for="ghiChuHoanThanh" class="form-label">
+                                    <i class="fas fa-comment me-2"></i>Ghi chú hoàn thành
+                                    <small class="text-muted">(tùy chọn)</small>
+                                </label>
+                                <textarea class="form-control" id="ghiChuHoanThanh" name="ghiChuHoanThanh" 
+                                          rows="4" placeholder="Nhập ghi chú về quá trình bảo hành, kết quả sửa chữa, v.v..."></textarea>
+                                <small class="text-muted d-block mt-2">
+                                    <i class="fas fa-lightbulb me-1"></i>Ví dụ: Thiết bị đã được sửa chữa thành công, hoạt động bình thường
+                                </small>
+                            </div>
+
+                            <!-- Confirmation Checkbox -->
+                            <div class="mb-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="confirmComplete" required>
+                                    <label class="form-check-label" for="confirmComplete">
+                                        Tôi xác nhận rằng bảo hành này đã được hoàn thành và thiết bị đã được trả cho khách hàng
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Timeline Preview -->
+                            <div class="mb-4">
+                                <h6 class="mb-3">
+                                    <i class="fas fa-history me-2"></i>Quy trình hiện tại
+                                </h6>
+                                <div style="max-height: 300px; overflow-y: auto;" class="border rounded p-3 bg-light">
+                                    <div th:if="${warranty.timelines != null && !warranty.timelines.isEmpty()}">
+                                        <div th:each="timeline : ${warranty.timelines}" class="mb-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-circle text-success me-1"></i>
+                                                <span th:text="${timeline.buocThucHien}"></span>
+                                                - 
+                                                <span th:text="${#temporals.format(timeline.thoiGianThucHien, 'HH:mm dd/MM/yyyy')}"></span>
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div th:if="${warranty.timelines == null || warranty.timelines.isEmpty()}" class="text-muted text-center">
+                                        <i class="fas fa-inbox me-2"></i>Chưa có bước nào được thêm
+                                    </div>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    <i class="fas fa-arrow-down me-1"></i>
+                                    Sau khi hoàn thành, bước "Trả thiết bị cho khách hàng" sẽ được thêm tự động
+                                </small>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="d-grid gap-2 d-sm-flex justify-content-sm-end">
+                                <a href="/bao-hanh" class="btn btn-secondary">
+                                    <i class="fas fa-times me-2"></i>Hủy
+                                </a>
+                                <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
+                                    <i class="fas fa-check-circle me-2"></i>Hoàn Thành Bảo Hành
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Warning Card -->
+                <div class="alert alert-warning mt-4" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Lưu ý quan trọng:</strong> Hành động này không thể hoàn tác. Vui lòng kiểm tra kỹ thông tin trước khi nhấn "Hoàn Thành Bảo Hành".
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Disable submit button until checkbox is checked
+        document.addEventListener('DOMContentLoaded', function() {
+            const confirmCheckbox = document.getElementById('confirmComplete');
+            const submitBtn = document.getElementById('submitBtn');
+
+            // Initially disable the button
+            submitBtn.disabled = true;
+
+            // Enable/disable button based on checkbox
+            confirmCheckbox.addEventListener('change', function() {
+                submitBtn.disabled = !this.checked;
+            });
+        });
+    </script>
+</body>
+</html>

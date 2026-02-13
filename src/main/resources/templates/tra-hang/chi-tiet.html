@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${pageTitle}">Chi tiết trả hàng</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-bottom: 80px;
+        }
+        .navbar-brand {
+            font-weight: bold;
+        }
+        .card {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: none;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #495057;
+        }
+        .status-badge {
+            font-size: 0.9em;
+            padding: 0.5em 1em;
+        }
+        .timeline-item {
+            border-left: 3px solid #007bff;
+            padding-left: 20px;
+            margin-bottom: 20px;
+        }
+        .timeline-date {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-chart-line me-2"></i>OSS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt me-1"></i>Tổng quan
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/nhan-vien">
+                            <i class="fas fa-users me-1"></i>Nhân viên
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hang-hoa">
+                            <i class="fas fa-box me-1"></i>Hàng hóa
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/khach-hang">
+                            <i class="fas fa-user-friends me-1"></i>Khách hàng
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/nha-phan-phoi">
+                            <i class="fas fa-truck me-1"></i>Nhà phân phối
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/settings">
+                            <i class="fas fa-cog me-1"></i>Cài đặt
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>Người dùng
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/auth/change-password">
+                                <i class="fas fa-key me-2"></i>Đổi mật khẩu
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/auth/logout">
+                                <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/tra-hang">Trả hàng</a></li>
+                        <li class="breadcrumb-item active" th:text="${traHang.maTraHang}">TH001</li>
+                    </ol>
+                </nav>
+                <h2>
+                    <i class="fas fa-info-circle text-primary me-2"></i>
+                    Chi tiết trả hàng
+                </h2>
+                <p class="text-muted mb-0" th:text="'Mã: ' + ${traHang.maTraHang}">Mã: TH001</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a th:href="@{/tra-hang/sua/{id}(id=${traHang.id})}" class="btn btn-warning me-2">
+                    <i class="fas fa-edit me-1"></i>Chỉnh sửa
+                </a>
+                <a href="/tra-hang" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Quay lại
+                </a>
+            </div>
+        </div>
+
+        <!-- Alert Messages -->
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="row">
+            <!-- Main Info -->
+            <div class="col-lg-8">
+                <!-- Basic Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info me-2"></i>Thông tin cơ bản
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <span class="info-label">Mã trả hàng:</span>
+                                <div class="mt-1">
+                                    <strong th:text="${traHang.maTraHang}">TH001</strong>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <span class="info-label">Trạng thái:</span>
+                                <div class="mt-1" th:if="${traHang.trangThai != null}">
+                                    <span th:switch="${traHang.trangThai.name()}" class="badge status-badge">
+                                        <span th:case="'CHO_DUYET'" class="badge bg-warning text-dark">Chờ duyệt</span>
+                                        <span th:case="'DA_DUYET'" class="badge bg-success">Đã duyệt</span>
+                                        <span th:case="'TU_CHOI'" class="badge bg-danger">Từ chối</span>
+                                    </span>
+                                </div>
+                                <div class="mt-1" th:if="${traHang.trangThai == null}">
+                                    <span class="badge bg-secondary">N/A</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <span class="info-label">Ngày trả hàng:</span>
+                                <div class="mt-1" th:if="${traHang.ngayTraHang}">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    <span th:text="${#temporals.format(traHang.ngayTraHang, 'dd/MM/yyyy HH:mm')}">01/01/2024 10:00</span>
+                                </div>
+                                <div class="mt-1" th:unless="${traHang.ngayTraHang}">
+                                    <span class="text-muted">Chưa xác định</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3" th:if="${traHang.ngayXuLy}">
+                                <span class="info-label">Ngày xử lý:</span>
+                                <div class="mt-1">
+                                    <i class="fas fa-check me-1"></i>
+                                    <span th:text="${#temporals.format(traHang.ngayXuLy, 'dd/MM/yyyy HH:mm')}">01/01/2024 15:00</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3" th:if="${traHang.nguoiXuLy}">
+                                <span class="info-label">Người xử lý:</span>
+                                <div class="mt-1">
+                                    <i class="fas fa-user me-1"></i>
+                                    <span th:text="${traHang.nguoiXuLy}">Admin</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-box me-2"></i>Thông tin hàng hóa
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3" th:if="${traHang.hangHoa != null}">
+                                <span class="info-label">Tên hàng hóa:</span>
+                                <div class="mt-1">
+                                    <strong th:text="${traHang.hangHoa.tenHangHoa}">Tên sản phẩm</strong>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3" th:if="${traHang.hangHoa != null}">
+                                <span class="info-label">Mã hàng hóa:</span>
+                                <div class="mt-1">
+                                    <code th:text="${traHang.hangHoa.maHangHoa}">HH001</code>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3" th:if="${traHang.hangHoa == null}">
+                                <span class="badge bg-secondary">Không có thông tin hàng hóa</span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <span class="info-label">Số lượng:</span>
+                                <div class="mt-1">
+                                    <span class="badge bg-info" th:text="${traHang.soLuong}">1</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <span class="info-label">Đơn giá:</span>
+                                <div class="mt-1">
+                                    <strong th:text="${#numbers.formatDecimal(traHang.donGia, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">100,000 VNĐ</strong>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <span class="info-label">Thành tiền:</span>
+                                <div class="mt-1">
+                                    <strong class="text-success" th:text="${#numbers.formatDecimal(traHang.thanhTien, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">100,000 VNĐ</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customer Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user me-2"></i>Thông tin khách hàng
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <span class="info-label">Tên khách hàng:</span>
+                                <div class="mt-1">
+                                    <strong th:text="${traHang.tenKhachHang}">Tên khách hàng</strong>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3" th:if="${traHang.soDienThoai}">
+                                <span class="info-label">Số điện thoại:</span>
+                                <div class="mt-1">
+                                    <i class="fas fa-phone me-1"></i>
+                                    <span th:text="${traHang.soDienThoai}">0123456789</span>
+                                </div>
+                            </div>
+                            <div class="col-12" th:if="${traHang.lyDo}">
+                                <span class="info-label">Lý do trả hàng:</span>
+                                <div class="mt-2 p-3 bg-light rounded">
+                                    <i class="fas fa-comment me-1"></i>
+                                    <span th:text="${traHang.lyDo}">Lý do trả hàng...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Status Timeline -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-history me-2"></i>Lịch sử trạng thái
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Created -->
+                        <div class="timeline-item">
+                            <div class="d-flex justify-content-between">
+                                <strong>Tạo yêu cầu</strong>
+                                <span class="badge bg-primary">Hoàn thành</span>
+                            </div>
+                            <div class="timeline-date" th:if="${traHang.createdAt}">
+                                <i class="fas fa-clock me-1"></i>
+                                <span th:text="${#temporals.format(traHang.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2024 10:00</span>
+                            </div>
+                        </div>
+
+                        <!-- Current Status -->
+                        <div class="timeline-item" th:if="${traHang.trangThai != null}">
+                            <div class="d-flex justify-content-between">
+                                <strong th:text="${traHang.trangThai.displayName}">Trạng thái hiện tại</strong>
+                                <span th:switch="${traHang.trangThai.name()}" class="badge">
+                                    <span th:case="'CHO_DUYET'" class="badge bg-warning">Đang chờ</span>
+                                    <span th:case="'DA_DUYET'" class="badge bg-success">Hoàn thành</span>
+                                    <span th:case="'TU_CHOI'" class="badge bg-danger">Bị từ chối</span>
+                                </span>
+                            </div>
+                            <div class="timeline-date" th:if="${traHang.ngayXuLy}">
+                                <i class="fas fa-clock me-1"></i>
+                                <span th:text="${#temporals.format(traHang.ngayXuLy, 'dd/MM/yyyy HH:mm')}">01/01/2024 15:00</span>
+                            </div>
+                            <div class="timeline-date" th:unless="${traHang.ngayXuLy}">
+                                <i class="fas fa-hourglass-half me-1"></i>
+                                Chờ xử lý...
+                            </div>
+                        </div>
+                        <div class="timeline-item" th:if="${traHang.trangThai == null}">
+                            <div class="d-flex justify-content-between">
+                                <strong>Trạng thái không xác định</strong>
+                                <span class="badge bg-secondary">N/A</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-bolt me-2"></i>Thao tác nhanh
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <!-- Actions for CHO_DUYET status -->
+                            <div th:if="${traHang.trangThai != null and traHang.trangThai.name() == 'CHO_DUYET'}">
+                                <form th:action="@{/tra-hang/duyet/{id}(id=${traHang.id})}" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-success w-100 mb-2" 
+                                            onclick="return confirm('Bạn có chắc chắn muốn DUYỆT trả hàng này?\n\n✅ Hàng hóa sẽ được nhập lại vào kho\n💰 Số tiền sẽ được trừ khỏi doanh thu')">
+                                        <i class="fas fa-check me-1"></i>Duyệt trả hàng
+                                    </button>
+                                </form>
+                                
+                                <button type="button" class="btn btn-danger w-100 mb-2" 
+                                        data-bs-toggle="modal" data-bs-target="#rejectModal">
+                                    <i class="fas fa-times me-1"></i>Từ chối trả hàng
+                                </button>
+                            </div>
+                            
+                            <!-- Actions for DA_DUYET status -->
+                            <div th:if="${traHang.trangThai != null and traHang.trangThai.name() == 'DA_DUYET'}">
+                                <div class="alert alert-success mb-2">
+                                    <i class="fas fa-check-circle me-1"></i>
+                                    Đã duyệt trả hàng
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-6">
+                                        <form th:action="@{/tra-hang/hoan-tac/{id}(id=${traHang.id})}" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-warning w-100 mb-2" 
+                                                    onclick="return confirm('Bạn có chắc chắn muốn HOÀN TÁC việc duyệt trả hàng?\n\n⚠️ Hàng hóa sẽ được trừ khỏi kho\n💰 Số tiền sẽ được cộng lại vào doanh thu')">
+                                                <i class="fas fa-undo me-1"></i>Hoàn tác
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <div class="col-6">
+                                        <button type="button" class="btn btn-danger w-100 mb-2" 
+                                                data-bs-toggle="modal" data-bs-target="#rejectAfterApprovalModal">
+                                            <i class="fas fa-times me-1"></i>Từ chối
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-warning">
+                                    <small><i class="fas fa-info-circle me-1"></i>
+                                    <strong>Lưu ý:</strong> Từ chối sau khi đã duyệt sẽ tự động hoàn tác tồn kho và doanh thu</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Actions for TU_CHOI status -->
+                            <div th:if="${traHang.trangThai != null and traHang.trangThai.name() == 'TU_CHOI'}">
+                                <div class="alert alert-danger mb-2">
+                                    <i class="fas fa-times-circle me-1"></i>
+                                    Đã từ chối trả hàng
+                                </div>
+                            </div>
+                            
+                            <!-- Common Actions -->
+                            <hr>
+                            
+                            <a th:href="@{/tra-hang/sua/{id}(id=${traHang.id})}" class="btn btn-warning">
+                                <i class="fas fa-edit me-1"></i>Chỉnh sửa
+                            </a>
+                            
+                            <a href="/tra-hang" class="btn btn-outline-secondary">
+                                <i class="fas fa-list me-1"></i>Danh sách trả hàng
+                            </a>
+                            
+                            <a href="/tra-hang/them" class="btn btn-outline-primary">
+                                <i class="fas fa-plus me-1"></i>Tạo trả hàng mới
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Modal -->
+    <div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form th:action="@{/tra-hang/tu-choi/{id}(id=${traHang.id})}" method="post">
+                    <div class="modal-header">
+                        <h5 class="modal-title text-danger">
+                            <i class="fas fa-times-circle me-2"></i>
+                            Từ chối trả hàng
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Bạn có chắc chắn muốn <strong class="text-danger">TỪ CHỐI</strong> trả hàng <strong th:text="${traHang.maTraHang}">TH001</strong> không?</p>
+                        
+                        <div class="mb-3">
+                            <label for="lyDoTuChoi" class="form-label">Lý do từ chối (tùy chọn):</label>
+                            <textarea class="form-control" id="lyDoTuChoi" name="lyDoTuChoi" 
+                                    rows="3" placeholder="Nhập lý do từ chối trả hàng..."></textarea>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-info-circle me-1"></i>
+                            <strong>Lưu ý:</strong> Khi từ chối, hàng hóa sẽ KHÔNG được nhập lại vào kho và khách hàng sẽ không được hoàn tiền.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-times me-1"></i>Từ chối trả hàng
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject After Approval Modal -->
+    <div class="modal fade" id="rejectAfterApprovalModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form th:action="@{/tra-hang/tu-choi/{id}(id=${traHang.id})}" method="post">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Từ chối sau khi đã duyệt
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-danger">
+                            <h6><i class="fas fa-warning me-2"></i>CẢNH BÁO QUAN TRỌNG</h6>
+                            <p class="mb-0">Bạn đang từ chối đơn trả hàng <strong th:text="${traHang.maTraHang}">TH001</strong> đã được <strong>DUYỆT TRƯỚC ĐÓ</strong>!</p>
+                        </div>
+                        
+                        <h6>🔄 Các thay đổi sẽ được thực hiện:</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-minus-circle text-danger me-2"></i>Trừ lại <strong th:text="${traHang.soLuong}">X</strong> sản phẩm khỏi kho</li>
+                            <li><i class="fas fa-plus-circle text-success me-2"></i>Cộng lại <strong th:text="${#numbers.formatDecimal(traHang.thanhTien, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">X VNĐ</strong> vào doanh thu</li>
+                            <li><i class="fas fa-ban text-warning me-2"></i>Đơn trả hàng chuyển thành "Từ chối"</li>
+                        </ul>
+                        
+                        <div class="mb-3">
+                            <label for="lyDoTuChoiSauDuyet" class="form-label"><strong>Lý do từ chối (bắt buộc):</strong></label>
+                            <textarea class="form-control" id="lyDoTuChoiSauDuyet" name="lyDoTuChoi" 
+                                    rows="4" placeholder="Nhập lý do chi tiết tại sao từ chối đơn đã duyệt..." required></textarea>
+                            <small class="text-muted">Lý do này sẽ được ghi vào lịch sử đơn hàng</small>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-info-circle me-1"></i>
+                            <strong>Hành động này không thể hoàn tác!</strong> Vui lòng cân nhắc kỹ trước khi thực hiện.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-times me-1"></i>Xác nhận từ chối
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            var alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                var bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    </script>
+</body>
+</html>

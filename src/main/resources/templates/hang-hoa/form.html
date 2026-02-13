@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thêm Hàng Hóa Mới</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            min-height: 100vh;
+            background: white;
+            padding-top: 20px;
+            padding-bottom: 80px;
+        }
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        .navbar-brand {
+            font-weight: bold;
+        }
+        body {
+            padding-top: 70px;
+        }
+        .form-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            padding: 40px;
+            margin-top: 30px;
+        }
+        .form-title {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .form-label {
+            font-weight: 500;
+            color: #555;
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+        }
+        .btn-secondary {
+            padding: 12px 30px;
+            border-radius: 25px;
+        }
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #343a40;
+            color: white;
+            text-align: center;
+            padding: 15px 0;
+            margin-bottom: 3px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-chart-line me-2"></i>OSS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt me-1"></i>Tổng quan
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/nhan-vien">
+                            <i class="fas fa-users me-1"></i>Nhân viên
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hang-hoa">
+                            <i class="fas fa-box me-1"></i>Hàng hóa
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/khach-hang">
+                            <i class="fas fa-user-friends me-1"></i>Khách hàng
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/nha-phan-phoi">
+                            <i class="fas fa-truck me-1"></i>Nhà phân phối
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/settings">
+                            <i class="fas fa-cog me-1"></i>Cài đặt
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>Người dùng
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/auth/change-password">
+                                <i class="fas fa-key me-2"></i>Đổi mật khẩu
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/auth/logout">
+                                <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="form-container">
+                    <h2 class="form-title">
+                        <i class="fas fa-box-open me-2"></i>
+                        <span th:text="${hangHoa.id != null ? 'Chỉnh sửa Hàng Hóa' : 'Thêm Hàng Hóa Mới'}">Thêm Hàng Hóa Mới</span>
+                    </h2>
+                    
+                    <form th:action="@{${hangHoa.id != null ? '/hang-hoa/' + hangHoa.id : '/hang-hoa/save'}}" method="post" th:object="${hangHoa}" id="hangHoaForm">
+                        <input type="hidden" th:if="${hangHoa.id != null}" th:field="*{id}">
+                        <input type="hidden" id="continueAdding" name="continueAdding" value="false">
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="tenHangHoa" class="form-label">Tên Hàng Hóa <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="tenHangHoa" th:field="*{tenHangHoa}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="maHangHoa" class="form-label">Mã Hàng Hóa <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="maHangHoa" th:field="*{maHangHoa}" required 
+                                       autocomplete="off" list="maHangHoaSuggestions">
+                                <datalist id="maHangHoaSuggestions"></datalist>
+                                <small class="text-muted">Nhập mã để tìm kiếm và tự động điền thông tin</small>
+                            </div>
+                        </div>                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="soSerial" class="form-label">Số Serial <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="soSerial" th:field="*{soSerial}" required placeholder="VD: SN2024001">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="autoGenerateSerial" class="form-check-input me-2" aria-label="Tự động tạo số serial">
+                                        <label for="autoGenerateSerial" class="form-check-label small">Tự động</label>
+                                    </div>
+                                </div>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Tích "Tự động" để sinh số serial theo format: OSS*********** với * là ký tự A-Z hoặc số 0-9.
+                                </div>
+                                <div id="serialDuplicateMessage" class="text-danger small mt-2 d-none">
+                                    Hàng hóa với số serial này đã được nhập trước đó.
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="nhaPhanPhoi" class="form-label">Nhà Phân Phối</label>
+                                <div class="input-group">
+                                    <select class="form-control" id="nhaPhanPhoi" name="nhaPhanPhoi.maNhaPhanPhoi">
+                                        <option value="">-- Chọn nhà phân phối --</option>
+                                        <option th:each="npp : ${nhaPhanPhois}" 
+                                                th:value="${npp.maNhaPhanPhoi}"
+                                                th:text="${npp.tenNhaPhanPhoi}"
+                                                th:selected="${hangHoa.nhaPhanPhoi != null and hangHoa.nhaPhanPhoi.maNhaPhanPhoi == npp.maNhaPhanPhoi}">Nhà phân phối</option>
+                                    </select>
+                                    <button type="button" class="btn btn-outline-success" id="btnAddNPP" data-bs-toggle="modal" data-bs-target="#quickAddNPPModal">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted">Nút + để thêm nhanh nhà phân phối</small>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="loaiHangHoa" class="form-label">Loại Hàng Hóa</label>
+                                <select class="form-control" id="loaiHangHoa" th:field="*{loaiHangHoa}">
+                                    <option value="">-- Chọn loại hàng hóa --</option>
+                                    <option value="Điện tử">Điện tử</option>
+                                    <option value="Thời trang">Thời trang</option>
+                                    <option value="Thực phẩm">Thực phẩm</option>
+                                    <option value="Gia dụng">Gia dụng</option>
+                                    <option value="Văn phòng phẩm">Văn phòng phẩm</option>
+                                    <option value="Khác">Khác</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="donViTinh" class="form-label">Đơn Vị Tính</label>
+                                <select class="form-control" id="donViTinh" th:field="*{donViTinh}">
+                                    <option value="">-- Chọn đơn vị --</option>
+                                    <option value="Cái">Cái</option>
+                                    <option value="Chiếc">Chiếc</option>
+                                    <option value="Kg">Kg</option>
+                                    <option value="Thùng">Thùng</option>
+                                    <option value="Bộ">Bộ</option>
+                                    <option value="Lít">Lít</option>
+                                    <option value="Mét">Mét</option>
+                                    <option value="Phần mềm">Phần mềm</option>
+                                    <option value="Licence">Licence</option>
+                                    <option value="Cây">Cây</option>
+                                    <option value="Cuộn">Cuộn</option>
+                                    <option value="Sợi">Sợi</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="giaVon" class="form-label">Giá Vốn (VND)</label>
+                                <input type="number" class="form-control" id="giaVon" th:field="*{giaVon}" min="0" step="1000">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="giaBan" class="form-label">Giá Bán (VND)</label>
+                                <input type="number" class="form-control" id="giaBan" th:field="*{giaBan}" min="0" step="1000">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="soLuongTon" class="form-label">Số lượng</label>
+                                <input type="number" class="form-control" id="soLuongTon" th:field="*{soLuongTon}" min="1">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="thuongHieu" class="form-label">Thương Hiệu</label>
+                                <input type="text" class="form-control" id="thuongHieu" th:field="*{thuongHieu}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="xuatXu" class="form-label">Xuất Xứ</label>
+                                <input type="text" class="form-control" id="xuatXu" th:field="*{xuatXu}">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="ngayNhap" class="form-label">Ngày Nhập hàng <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="ngayNhap" th:field="*{ngayNhap}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="thoiGianBaoHanh" class="form-label">Thời Gian Bảo Hành <span class="badge bg-info">Tháng</span></label>
+                                <input type="number" class="form-control" id="thoiGianBaoHanh" th:field="*{thoiGianBaoHanh}" 
+                                       min="0" max="120" value="12" 
+                                       onchange="calculateWarrantyExpiry()"
+                                       title="Số tháng bảo hành từ ngày nhập">
+                                <small class="text-muted">✓ Tính từ ngày nhập hàng</small>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="ngayHetHanBaoHanh" class="form-label">Ngày Hết Hạn Bảo Hành</label>
+                                <input type="date" class="form-control" id="ngayHetHanBaoHanh" th:field="*{ngayHetHanBaoHanh}" readonly style="background-color: #e9ecef; cursor: not-allowed;">
+                                <small class="text-muted">✓ Tự động tính toán</small>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="moTa" class="form-label">Mô Tả</label>
+                            <textarea class="form-control" id="moTa" th:field="*{moTa}" rows="3"></textarea>
+                        </div>
+                        
+                        <!-- NEW SECTION: Mua Công Nợ từ Nhà Phân Phối -->
+                        <div class="card mt-4 mb-4 border-warning">
+                            <div class="card-header bg-warning text-dark fw-bold">
+                                <i class="fas fa-credit-card me-2"></i>Mua Hàng Trên Công Nợ (Từ Nhà Phân Phối)
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="isDebtPurchase" class="form-check-label">
+                                            <input type="checkbox" class="form-check-input" id="isDebtPurchase" name="isDebtPurchase">
+                                            <span class="ms-2"><strong>Mua trên công nợ?</strong></span>
+                                        </label>
+                                        <small class="text-muted d-block mt-2">
+                                            Tích chọn nếu hàng hóa này được mua từ nhà phân phối trên công nợ
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                <div id="debtPurchaseSection" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="debtSupplier" class="form-label">Nhà Phân Phối <span class="text-danger">*</span></label>
+                                            <select class="form-control" id="debtSupplier" name="debtSupplier.maNhaPhanPhoi">
+                                                <option value="">-- Chọn nhà phân phối --</option>
+                                                <option th:each="npp : ${nhaPhanPhois}" 
+                                                        th:value="${npp.maNhaPhanPhoi}"
+                                                        th:text="${npp.tenNhaPhanPhoi}">Nhà phân phối</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="debtPurchaseDate" class="form-label">Ngày Mua <span class="text-danger">*</span></label>
+                                            <input type="date" class="form-control" id="debtPurchaseDate" name="debtPurchaseDate">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="debtAmount" class="form-label">Số Tiền Mua (VND) <span class="text-danger">*</span></label>
+                                            <input type="number" class="form-control" id="debtAmount" name="debtAmount" min="0" step="1000" placeholder="Nhập số tiền">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="debtPaidAmount" class="form-label">Số Tiền Đã Trả (VND)</label>
+                                            <input type="number" class="form-control" id="debtPaidAmount" name="debtPaidAmount" min="0" step="1000" value="0" placeholder="0">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="debtPaymentDeadline" class="form-label">Hạn Thanh Toán</label>
+                                            <input type="date" class="form-control" id="debtPaymentDeadline" name="debtPaymentDeadline">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="debtPaymentMethod" class="form-label">Phương Thức Thanh Toán</label>
+                                            <select class="form-control" id="debtPaymentMethod" name="debtPaymentMethod">
+                                                <option value="">-- Chọn phương thức --</option>
+                                                <option value="TIEN_MAT">Tiền Mặt</option>
+                                                <option value="CHUYEN_KHOAN">Chuyển Khoản</option>
+                                                <option value="CHI_TRANG">Chỉ Trăng</option>
+                                                <option value="THU_HUONG">Thu Hương</option>
+                                                <option value="KHAC">Khác</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-12 mb-3">
+                                            <label for="debtNote" class="form-label">Ghi Chú (Công Nợ)</label>
+                                            <textarea class="form-control" id="debtNote" name="debtNote" rows="2" placeholder="Ghi chú về công nợ này"></textarea>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="alert alert-info" role="alert">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <strong>Thông tin tự động:</strong> Hệ thống sẽ tự động tạo bản ghi công nợ nhà phân phối (SupplierDebt) liên kết với hàng hóa này khi bạn lưu.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary me-3">
+                                <i class="fas fa-save me-2"></i>Lưu Hàng Hóa
+                            </button>
+                            <a th:href="@{/hang-hoa}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Quay Lại
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Thêm Nhanh Nhà Phân Phối -->
+    <div class="modal fade" id="quickAddNPPModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-plus-circle me-2"></i>Thêm Nhà Phân Phối Mới
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="quickAddNPPForm">
+                        <div class="mb-3">
+                            <label for="qckMaNPP" class="form-label">Mã Nhà Phân Phối <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="qckMaNPP" placeholder="VD: NPP001" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="qckTenNPP" class="form-label">Tên Nhà Phân Phối <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="qckTenNPP" placeholder="VD: Công ty ABC" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="qckSDT" class="form-label">Số Điện Thoại</label>
+                            <input type="tel" class="form-control" id="qckSDT" placeholder="VD: 0123456789">
+                        </div>
+                        <div class="mb-3">
+                            <label for="qckEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="qckEmail" placeholder="VD: abc@company.com">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-success" id="btnSaveNPP">
+                        <i class="fas fa-save me-2"></i>Thêm & Chọn
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // ============ TÍNH TOÁN NGÀY HẾT HẠN BẢO HÀNH ============
+        function calculateWarrantyExpiry() {
+            const ngayNhapInput = document.getElementById('ngayNhap').value;
+            const thoiGianBaoHanhInput = document.getElementById('thoiGianBaoHanh').value;
+            const ngayHetHanBaoHanhInput = document.getElementById('ngayHetHanBaoHanh');
+            
+            if (!ngayNhapInput || !thoiGianBaoHanhInput) {
+                ngayHetHanBaoHanhInput.value = '';
+                return;
+            }
+            
+            try {
+                // Parse ngày nhập
+                const ngayNhap = new Date(ngayNhapInput);
+                const thoiGianThang = parseInt(thoiGianBaoHanhInput);
+                
+                // Tính ngày hết hạn = ngày nhập + số tháng
+                const ngayHetHan = new Date(ngayNhap);
+                ngayHetHan.setMonth(ngayHetHan.getMonth() + thoiGianThang);
+                
+                // Format: YYYY-MM-DD
+                const year = ngayHetHan.getFullYear();
+                const month = String(ngayHetHan.getMonth() + 1).padStart(2, '0');
+                const day = String(ngayHetHan.getDate()).padStart(2, '0');
+                ngayHetHanBaoHanhInput.value = `${year}-${month}-${day}`;
+            } catch (e) {
+                console.error('Error calculating warranty expiry:', e);
+                ngayHetHanBaoHanhInput.value = '';
+            }
+        }
+        
+        // ============ QUẢN LÝ MODAL THÊM NHÀ PHÂN PHỐI ============
+        document.addEventListener('DOMContentLoaded', function() {
+            const modalElement = document.getElementById('quickAddNPPModal');
+            const quickAddNPPModal = new bootstrap.Modal(modalElement);
+            const btnSaveNPP = document.getElementById('btnSaveNPP');
+            const quickAddNPPForm = document.getElementById('quickAddNPPForm');
+            
+            // Thêm event listener cho ngayNhap và thoiGianBaoHanh
+            document.getElementById('ngayNhap').addEventListener('change', calculateWarrantyExpiry);
+            document.getElementById('thoiGianBaoHanh').addEventListener('change', calculateWarrantyExpiry);
+            
+            // Tính toán lần đầu khi load trang
+            setTimeout(calculateWarrantyExpiry, 100);
+            
+            btnSaveNPP.addEventListener('click', async function() {
+                if (!quickAddNPPForm.checkValidity()) {
+                    quickAddNPPForm.reportValidity();
+                    return;
+                }
+                
+                const maNPP = document.getElementById('qckMaNPP').value.trim();
+                const tenNPP = document.getElementById('qckTenNPP').value.trim();
+                const sdtNPP = document.getElementById('qckSDT').value.trim();
+                const emailNPP = document.getElementById('qckEmail').value.trim();
+                
+                try {
+                    const response = await fetch('/nha-phan-phoi/api/create-quick', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            maNhaPhanPhoi: maNPP,
+                            tenNhaPhanPhoi: tenNPP,
+                            soDienThoai: sdtNPP,
+                            email: emailNPP,
+                            trangThai: 'Hoạt động'
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        alert('Lỗi: ' + errorText);
+                        return;
+                    }
+                    
+                    const newNPP = await response.json();
+                    
+                    // Thêm option mới vào select
+                    const nhaPhanPhoiSelect = document.getElementById('nhaPhanPhoi');
+                    const newOption = document.createElement('option');
+                    newOption.value = newNPP.maNhaPhanPhoi;
+                    newOption.textContent = newNPP.tenNhaPhanPhoi;
+                    newOption.selected = true;
+                    nhaPhanPhoiSelect.appendChild(newOption);
+                    
+                    // Đóng modal và reset form
+                    quickAddNPPModal.hide();
+                    quickAddNPPForm.reset();
+                    
+                    // Hiển thị thông báo thành công
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+                    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+                    alertDiv.innerHTML = `
+                        <i class="fas fa-check-circle me-2"></i>
+                        Thêm nhà phân phối thành công: <strong>${newNPP.tenNhaPhanPhoi}</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    document.body.appendChild(alertDiv);
+                    
+                    setTimeout(() => {
+                        alertDiv.remove();
+                    }, 3000);
+                    
+                } catch (error) {
+                    console.error('Lỗi khi thêm nhà phân phối:', error);
+                    alert('Có lỗi xảy ra: ' + error.message);
+                }
+            });
+        });
+        document.addEventListener('DOMContentLoaded', function() {
+            const autoGenerateCheckbox = document.getElementById('autoGenerateSerial');
+            const serialInput = document.getElementById('soSerial');
+            const soLuongInput = document.getElementById('soLuongTon');
+            const serialDuplicateMessage = document.getElementById('serialDuplicateMessage');
+            const hangHoaIdInput = document.querySelector('input[name="id"]');
+            
+            const ensurePositiveQuantity = () => {
+                if (!soLuongInput) {
+                    return;
+                }
+                const currentValue = parseInt(soLuongInput.value, 10);
+                if (!Number.isFinite(currentValue) || currentValue < 1) {
+                    soLuongInput.value = '1';
+                }
+            };
+            
+            if (soLuongInput) {
+                ensurePositiveQuantity();
+                soLuongInput.addEventListener('blur', ensurePositiveQuantity);
+            }
+
+            const resetSerialWarning = () => {
+                if (serialDuplicateMessage) {
+                    serialDuplicateMessage.classList.add('d-none');
+                }
+                if (serialInput) {
+                    serialInput.setCustomValidity('');
+                }
+            };
+
+            const checkSerialAvailability = async () => {
+                if (!serialInput) {
+                    return true;
+                }
+                const serialValue = serialInput.value.trim();
+                if (serialValue === '') {
+                    resetSerialWarning();
+                    return true;
+                }
+                try {
+                    const params = new URLSearchParams();
+                    params.append('serial', serialValue);
+                    if (hangHoaIdInput && hangHoaIdInput.value) {
+                        params.append('excludeId', hangHoaIdInput.value);
+                    }
+                    const response = await fetch(`/hang-hoa/api/check-serial?${params.toString()}`);
+                    if (!response.ok) {
+                        console.error('Không thể kiểm tra serial:', response.status);
+                        resetSerialWarning();
+                        return true;
+                    }
+                    const data = await response.json();
+                    if (data.exists) {
+                        if (serialDuplicateMessage) {
+                            serialDuplicateMessage.classList.remove('d-none');
+                        }
+                        serialInput.setCustomValidity('Số serial đã tồn tại.');
+                        return false;
+                    }
+                    resetSerialWarning();
+                    return true;
+                } catch (error) {
+                    console.error('Lỗi kiểm tra serial:', error);
+                    resetSerialWarning();
+                    return true;
+                }
+            };
+
+            if (serialInput) {
+                serialInput.addEventListener('input', resetSerialWarning);
+                serialInput.addEventListener('blur', () => {
+                    checkSerialAvailability();
+                });
+                checkSerialAvailability();
+            }
+            
+            // Xử lý khi checkbox thay đổi
+            autoGenerateCheckbox.addEventListener('change', async function() {
+                if (this.checked) {
+                    serialInput.readOnly = true;
+                    serialInput.style.backgroundColor = '#f8f9fa';
+                    await generateRandomSerial();
+                } else {
+                    // Cho phép nhập thủ công
+                    serialInput.readOnly = false;
+                    serialInput.disabled = false;
+                    serialInput.style.backgroundColor = '';
+                    serialInput.value = '';
+                    resetSerialWarning();
+                }
+            });
+            
+            // Hàm gọi API tạo số serial ngẫu nhiên
+            async function generateRandomSerial() {
+                // Hiển thị loading
+                resetSerialWarning();
+                serialInput.value = 'Đang tạo...';
+                serialInput.dispatchEvent(new Event('input'));
+                serialInput.disabled = true;
+                
+                let resolvedSerial = '';
+                try {
+                    const response = await fetch('/hang-hoa/api/generate-serial');
+                    if (!response.ok) {
+                        throw new Error('Lỗi khi tạo serial: ' + response.status);
+                    }
+                    resolvedSerial = (await response.text()).trim();
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra khi tạo số serial. Vui lòng thử lại!');
+                }
+
+                if (!resolvedSerial) {
+                    const prefix = 'OSS';
+                    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                    let randomChars = '';
+                    for (let i = 0; i < 11; i++) {
+                        randomChars += chars.charAt(Math.floor(Math.random() * chars.length));
+                    }
+                    resolvedSerial = prefix + randomChars;
+                }
+
+                serialInput.disabled = false;
+                serialInput.value = resolvedSerial;
+                serialInput.dispatchEvent(new Event('input'));
+                await checkSerialAvailability();
+            }
+            
+            // Kiểm tra khi form được submit
+            document.querySelector('form').addEventListener('submit', async function(e) {
+                const serialValue = serialInput.value.trim();
+                
+                if (autoGenerateCheckbox.checked) {
+                    // Kiểm tra format nếu là auto-generate
+                    if (!serialValue.startsWith('OSS') || serialValue.length !== 14) {
+                        e.preventDefault();
+                        alert('Số serial không đúng định dạng OSS***********!');
+                        return false;
+                    }
+                }
+                
+                if (serialValue === '') {
+                    e.preventDefault();
+                    alert('Vui lòng nhập hoặc tạo số serial!');
+                    return false;
+                }
+
+                const serialAvailable = await checkSerialAvailability();
+                if (!serialAvailable) {
+                    e.preventDefault();
+                    serialInput.reportValidity();
+                    return false;
+                }
+                
+                // Xác định xem có tiếp tục thêm hay không
+                const isNewForm = !document.querySelector('input[name="id"]');
+                const continueAddingInput = document.getElementById('continueAdding');
+                
+                if (isNewForm && !autoGenerateCheckbox.checked) {
+                    // Nếu checkbox serial KHÔNG được chọn -> tiếp tục thêm
+                    continueAddingInput.value = 'true';
+                    saveFormDataToSessionStorage();
+                } else {
+                    // Nếu checkbox serial ĐƯỢC chọn hoặc đang edit -> về danh sách
+                    continueAddingInput.value = 'false';
+                }
+            });
+            
+            // Hàm lưu thông tin form vào sessionStorage
+            function saveFormDataToSessionStorage() {
+                const formData = {
+                    tenHangHoa: document.getElementById('tenHangHoa').value,
+                    maHangHoa: document.getElementById('maHangHoa').value,
+                    loaiHangHoa: document.getElementById('loaiHangHoa').value,
+                    giaBan: document.getElementById('giaBan').value,
+                    giaVon: document.getElementById('giaVon').value,
+                    donViTinh: document.getElementById('donViTinh').value,
+                    thuongHieu: document.getElementById('thuongHieu').value,
+                    xuatXu: document.getElementById('xuatXu').value,
+                    soLuongTon: document.getElementById('soLuongTon').value,
+                    moTa: document.getElementById('moTa').value,
+                    ngayNhap: document.getElementById('ngayNhap').value,
+                    autoSerialChecked: autoGenerateCheckbox.checked
+                };
+                sessionStorage.setItem('hangHoaFormData', JSON.stringify(formData));
+            }
+            
+            // Hàm khôi phục dữ liệu form từ sessionStorage
+            function restoreFormDataFromSessionStorage() {
+                const savedData = sessionStorage.getItem('hangHoaFormData');
+                if (savedData) {
+                    const formData = JSON.parse(savedData);
+                    
+                    document.getElementById('tenHangHoa').value = formData.tenHangHoa || '';
+                    document.getElementById('maHangHoa').value = formData.maHangHoa || '';
+                    document.getElementById('loaiHangHoa').value = formData.loaiHangHoa || '';
+                    document.getElementById('giaBan').value = formData.giaBan || '';
+                    document.getElementById('giaVon').value = formData.giaVon || '';
+                    document.getElementById('donViTinh').value = formData.donViTinh || '';
+                    document.getElementById('thuongHieu').value = formData.thuongHieu || '';
+                    document.getElementById('xuatXu').value = formData.xuatXu || '';
+                    document.getElementById('soLuongTon').value = formData.soLuongTon || '';
+                    document.getElementById('moTa').value = formData.moTa || '';
+                    document.getElementById('ngayNhap').value = formData.ngayNhap || '';
+                    
+                    // Khôi phục trạng thái checkbox
+                    autoGenerateCheckbox.checked = formData.autoSerialChecked || false;
+                    
+                    // Xóa serial input (luôn để trống)
+                    serialInput.value = '';
+                    
+                    // Cập nhật trạng thái UI
+                    autoGenerateCheckbox.dispatchEvent(new Event('change'));
+                    ensurePositiveQuantity();
+                    resetSerialWarning();
+                    
+                    // Xóa dữ liệu đã lưu
+                    sessionStorage.removeItem('hangHoaFormData');
+                }
+            }
+            
+            // Khôi phục dữ liệu khi trang load (chỉ cho form mới)
+            const isNewForm = !document.querySelector('input[name="id"]');
+            if (isNewForm) {
+                restoreFormDataFromSessionStorage();
+            }
+            
+            // ============ AUTOCOMPLETE CHỨC NĂNG ============
+            const maHangHoaInput = document.getElementById('maHangHoa');
+            const datalist = document.getElementById('maHangHoaSuggestions');
+            let allHangHoa = []; // Lưu trữ toàn bộ danh sách hàng hóa
+            let debounceTimer;
+            
+            // Load danh sách hàng hóa khi trang tải
+            async function loadAllHangHoa() {
+                try {
+                    const response = await fetch('/hang-hoa/api/all');
+                    if (response.ok) {
+                        allHangHoa = await response.json();
+                    }
+                } catch (error) {
+                    console.error('Lỗi khi tải danh sách hàng hóa:', error);
+                }
+            }
+            
+            // Tự động điền thông tin khi chọn mã hàng hóa
+            maHangHoaInput.addEventListener('input', function() {
+                const searchValue = this.value.trim().toLowerCase();
+                
+                // Clear suggestions nếu input rỗng
+                if (searchValue === '') {
+                    datalist.innerHTML = '';
+                    return;
+                }
+                
+                // Lọc và hiển thị gợi ý
+                const matches = allHangHoa.filter(hh => 
+                    hh.maHangHoa.toLowerCase().includes(searchValue)
+                );
+                
+                datalist.innerHTML = '';
+                matches.slice(0, 10).forEach(hh => {
+                    const option = document.createElement('option');
+                    option.value = hh.maHangHoa;
+                    option.textContent = `${hh.maHangHoa} - ${hh.tenHangHoa}`;
+                    datalist.appendChild(option);
+                });
+            });
+            
+            // Khi người dùng chọn một mã (blur hoặc change)
+            maHangHoaInput.addEventListener('change', async function() {
+                const code = this.value.trim();
+                if (code === '') return;
+                
+                // Tìm trong danh sách đã load
+                const hangHoa = allHangHoa.find(hh => hh.maHangHoa === code);
+                
+                if (hangHoa) {
+                    // Tự động điền thông tin
+                    document.getElementById('tenHangHoa').value = hangHoa.tenHangHoa || '';
+                    document.getElementById('soSerial').value = hangHoa.soSerial || '';
+                    document.getElementById('loaiHangHoa').value = hangHoa.loaiHangHoa || '';
+                    document.getElementById('donViTinh').value = hangHoa.donViTinh || '';
+                    document.getElementById('giaVon').value = hangHoa.giaVon || '';
+                    document.getElementById('giaBan').value = hangHoa.giaBan || '';
+                    document.getElementById('soLuongTon').value = hangHoa.soLuongTon || '';
+                    document.getElementById('thuongHieu').value = hangHoa.thuongHieu || '';
+                    document.getElementById('xuatXu').value = hangHoa.xuatXu || '';
+                    document.getElementById('moTa').value = hangHoa.moTa || '';
+                    ensurePositiveQuantity();
+                    checkSerialAvailability();
+                    
+                    // Hiển thị thông báo
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                    alertDiv.innerHTML = `
+                        <i class="fas fa-check-circle me-2"></i>
+                        Đã tự động điền thông tin từ mã hàng hóa: <strong>${code}</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    const container = document.querySelector('.form-container');
+                    const formElement = document.querySelector('form');
+                    if (container && formElement) {
+                        container.insertBefore(alertDiv, formElement);
+                    }
+                    
+                    // Tự động ẩn sau 3 giây
+                    setTimeout(() => {
+                        alertDiv.remove();
+                    }, 3000);
+                }
+            });
+            
+            // Load danh sách khi trang tải
+            if (isNewForm) {
+                loadAllHangHoa();
+            }
+            
+            // ============ QUẢN LÝ MUA CÔNG NỢ ============
+            const isDebtPurchaseCheckbox = document.getElementById('isDebtPurchase');
+            const debtPurchaseSection = document.getElementById('debtPurchaseSection');
+            const debtAmountInput = document.getElementById('debtAmount');
+            const debtPaidAmountInput = document.getElementById('debtPaidAmount');
+            
+            // Hiển thị/ẩn section mua công nợ
+            if (isDebtPurchaseCheckbox) {
+                isDebtPurchaseCheckbox.addEventListener('change', function() {
+                    debtPurchaseSection.style.display = this.checked ? 'block' : 'none';
+                    if (!this.checked) {
+                        // Xóa dữ liệu khi bỏ chọn
+                        document.getElementById('debtSupplier').value = '';
+                        document.getElementById('debtPurchaseDate').value = '';
+                        debtAmountInput.value = '';
+                        debtPaidAmountInput.value = '0';
+                        document.getElementById('debtPaymentDeadline').value = '';
+                        document.getElementById('debtPaymentMethod').value = '';
+                        document.getElementById('debtNote').value = '';
+                    } else {
+                        // Thiết lập ngày mua mặc định là ngày hôm nay
+                        const today = new Date().toISOString().split('T')[0];
+                        document.getElementById('debtPurchaseDate').value = today;
+                    }
+                });
+            }
+            
+            // Tự động tính toán số tiền còn nợ
+            if (debtAmountInput && debtPaidAmountInput) {
+                debtAmountInput.addEventListener('input', updateRemainingDebt);
+                debtPaidAmountInput.addEventListener('input', updateRemainingDebt);
+            }
+            
+            function updateRemainingDebt() {
+                const amount = parseFloat(debtAmountInput.value) || 0;
+                const paid = parseFloat(debtPaidAmountInput.value) || 0;
+                const remaining = amount - paid;
+                
+                // Hiển thị thông tin (có thể thêm display nếu cần)
+                console.log(`Còn nợ: ${remaining.toLocaleString('vi-VN')} VND`);
+            }
+            
+            // Xác thực form khi submit
+            const hangHoaForm = document.getElementById('hangHoaForm');
+            if (hangHoaForm) {
+                hangHoaForm.addEventListener('submit', function(e) {
+                    if (isDebtPurchaseCheckbox.checked) {
+                        // Kiểm tra các trường bắt buộc trong section công nợ
+                        const debtSupplier = document.getElementById('debtSupplier').value.trim();
+                        const debtPurchaseDate = document.getElementById('debtPurchaseDate').value.trim();
+                        const debtAmount = document.getElementById('debtAmount').value.trim();
+                        
+                        if (!debtSupplier || !debtPurchaseDate || !debtAmount) {
+                            e.preventDefault();
+                            alert('Vui lòng điền đầy đủ thông tin mua công nợ: Nhà phân phối, Ngày mua, Số tiền!');
+                            return;
+                        }
+                        
+                        if (parseFloat(debtAmount) <= 0) {
+                            e.preventDefault();
+                            alert('Số tiền mua phải lớn hơn 0!');
+                            return;
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

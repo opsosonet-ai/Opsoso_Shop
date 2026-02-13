@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title th:text="${pageTitle}">Xuất hàng hóa</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .product-row {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        .product-row .row {
+            align-items: end;
+        }
+        .product-row .form-label {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        .product-row .form-control,
+        .product-row .form-select {
+            height: 38px;
+        }
+        .product-select {
+            border: 2px solid #0d6efd;
+        }
+        .total-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .product-row.editing {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+        }
+        .btn-group-vertical .btn {
+            border-radius: 4px !important;
+        }
+        .form-readonly .form-control,
+        .form-readonly .form-select {
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+            color: #6c757d;
+        }
+        .form-readonly .product-row {
+            background: #f1f3f4;
+            border: 1px solid #dee2e6;
+        }
+        .btn.disabled {
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-chart-line me-2"></i>OSS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt me-1"></i>Tổng quan
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/nhan-vien">
+                            <i class="fas fa-users me-1"></i>Nhân viên
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hang-hoa">
+                            <i class="fas fa-box me-1"></i>Hàng hóa
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/khach-hang">
+                            <i class="fas fa-user-friends me-1"></i>Khách hàng
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/nha-phan-phoi">
+                            <i class="fas fa-truck me-1"></i>Nhà phân phối
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/settings">
+                            <i class="fas fa-cog me-1"></i>Cài đặt
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>
+                            <span th:text="${currentUser ?: 'User'}">User</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/auth/change-password">
+                                <i class="fas fa-key me-2"></i>Đổi mật khẩu
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/auth/logout">
+                                <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4 mb-5">
+        <div class="row">
+            <div class="col-12">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1><i class="fas fa-sign-out-alt me-3 text-success"></i><span th:text="${pageTitle}">Xuất hàng hóa</span></h1>
+                    <a href="/hang-hoa" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Quay lại
+                    </a>
+                </div>
+
+                <!-- Flash Messages -->
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-check-circle me-2"></i><span th:text="${successMessage}"></span>
+                        </div>
+                        <div th:if="${phieuXuatId}">
+                            <a th:href="@{'/phieu-xuat/' + ${phieuXuatId} + '/print'}" 
+                               class="btn btn-primary btn-sm me-2" 
+                               target="_blank">
+                                <i class="fas fa-print me-1"></i>In phiếu xuất
+                            </a>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        <button th:unless="${phieuXuatId}" type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                </div>
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i><span th:text="${errorMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <!-- Form -->
+                <form id="exportForm" action="/phieu-xuat/save" method="post">
+                    <!-- CSRF Token for Spring Security -->
+                    <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+                    
+                    <!-- ID ẩn cho chỉnh sửa -->
+                    <input type="hidden" name="id" th:value="${phieuXuat != null ? phieuXuat.id : ''}">
+                    
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Thông tin phiếu xuất</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <!-- Khách hàng -->
+                                <div class="col-md-4">
+                                    <label class="form-label">Khách hàng (tùy chọn):</label>
+                                    <div class="input-group">
+                                        <input type="text" 
+                                               id="customerSearchInput"
+                                               class="form-control" 
+                                               placeholder="Nhập tên hoặc SĐT để tìm..." 
+                                               autocomplete="off"
+                                               list="customerSuggestions"
+                                               oninput="filterCustomers(this)"
+                                               onchange="selectCustomerFromSearch(this)">
+                                        <button type="button" class="btn btn-outline-primary" onclick="showNewCustomerModal()" title="Thêm khách hàng mới">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <datalist id="customerSuggestions"></datalist>
+                                    <input type="hidden" name="khachHangId" id="customerIdInput">
+                                    <small class="text-muted d-none" id="customerInfo"></small>
+                                </div>
+                                
+                                <!-- Ghi chú -->
+                                <div class="col-md-4">
+                                    <label class="form-label">Ghi chú:</label>
+                                    <input type="text" name="ghiChu" class="form-control" placeholder="Nhập ghi chú..." 
+                                           th:value="${phieuXuat != null ? phieuXuat.ghiChu : ''}">
+                                </div>
+                                
+                                <!-- Ngày xuất -->
+                                <div class="col-md-4">
+                                    <label class="form-label">Ngày xuất hàng:</label>
+                                    <input type="date" name="ngayXuat" class="form-control" required
+                                           th:value="${phieuXuat != null ? #temporals.format(phieuXuat.ngayXuat, 'yyyy-MM-dd') : #temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}">
+                                </div>
+
+                                <!-- Loại xuất -->
+                                <div class="col-md-4">
+                                    <label class="form-label">Loại xuất hàng:</label>
+                                    <select name="loaiXuat" id="saleTypeSelect" class="form-select" required onchange="toggleDeadlineField()">
+                                        <option value="TIEN_MAT" th:selected="${phieuXuat == null || phieuXuat.loaiXuat == 'TIEN_MAT'}">
+                                            <i class="fas fa-money-bill"></i> Bán tiền mặt
+                                        </option>
+                                        <option value="BAN_NO" th:selected="${phieuXuat != null && phieuXuat.loaiXuat == 'BAN_NO'}">
+                                            <i class="fas fa-handshake"></i> Bán nợ (Công nợ)
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <!-- Hạn thanh toán (chỉ hiển thị khi chọn BAN_NO) -->
+                                <div class="col-md-4" id="deadlineField" style="display: none;">
+                                    <label class="form-label">Hạn thanh toán:</label>
+                                    <input type="date" name="ngayHanThanhToan" id="ngayHanThanhToanInput" class="form-control"
+                                           th:value="${phieuXuat != null && phieuXuat.ngayHanThanhToan != null ? #temporals.format(phieuXuat.ngayHanThanhToan, 'yyyy-MM-dd') : ''}">
+                                    <small class="text-muted">Ngày hạn thanh toán cho khách hàng nợ tiền</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Danh sách hàng hóa -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-boxes me-2"></i>Danh sách hàng hóa xuất</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="productList">
+                                <!-- Product rows will be added here dynamically -->
+                            </div>
+                            
+                            <button type="button" class="btn btn-outline-primary" onclick="addProductRow()">
+                                <i class="fas fa-plus me-2"></i>Thêm hàng hóa
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tổng tiền -->
+                    <div class="card mb-4">
+                        <div class="card-body total-section">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h3 class="mb-0">Tổng tiền:</h3>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <h2 class="mb-0" id="totalAmount">0 đ</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="text-center">
+                        <button type="button" id="confirmBtn" class="btn btn-success btn-lg" onclick="submitForm()">
+                            <i class="fas fa-check me-2"></i>Xác nhận xuất hàng
+                        </button>
+                        <!-- Nút sửa phiếu xuất - hiển thị sau khi lưu thành công -->
+                        <button type="button" id="editBtn" class="btn btn-warning btn-lg" style="display: none;" onclick="enableEditMode()">
+                            <i class="fas fa-edit me-2"></i>Sửa phiếu xuất
+                        </button>
+                        <!-- Nút in phiếu xuất - hiển thị sau khi lưu thành công -->
+                        <button type="button" id="printBtn" class="btn btn-info btn-lg" style="display: none;" onclick="printPhieuXuat()">
+                            <i class="fas fa-print me-2"></i>In phiếu xuất
+                        </button>
+                        <a href="/hang-hoa" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-times me-2"></i>Hủy bỏ
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Thêm khách hàng mới -->
+    <div class="modal fade" id="newCustomerModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Thêm khách hàng mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newCustomerForm">
+                        <div class="mb-3">
+                            <label for="newCustomerName" class="form-label">Họ tên <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="newCustomerName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newCustomerPhone" class="form-label">Số điện thoại <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control" id="newCustomerPhone" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newCustomerEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="newCustomerEmail">
+                        </div>
+                        <div class="mb-3">
+                            <label for="newCustomerAddress" class="form-label">Địa chỉ</label>
+                            <input type="text" class="form-control" id="newCustomerAddress">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" onclick="saveNewCustomer()">
+                        <i class="fas fa-save me-2"></i>Lưu khách hàng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Hidden template for product row -->
+    <template id="productRowTemplate">
+        <div class="product-row" data-row-index="0">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-4">
+                    <label class="form-label mb-1 small">Hàng hóa:</label>
+                    <div style="position: relative;">
+                        <input type="text" 
+                               class="form-control form-control-sm product-search-input" 
+                               placeholder="Nhập tên hoặc serial để tìm..." 
+                               autocomplete="off"
+                               onchange="selectProductFromSearch(this)"
+                               onfocus="filterProducts(this)"
+                               oninput="filterProducts(this)" required>
+                        <!-- Custom dropdown list (replaces datalist) -->
+                        <div class="product-suggestions-dropdown" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-top: none; max-height: 200px; overflow-y: auto; display: none; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        </div>
+                    </div>
+                    <input type="hidden" name="hangHoaIds" class="product-id-input">
+                </div>
+                
+                <div class="col-md-1">
+                    <label class="form-label mb-1 small">Số lượng:</label>
+                    <input type="number" name="soLuongs" class="form-control form-control-sm quantity-input" min="1" value="1" onchange="calculateRowTotal(this)" required>
+                </div>
+                
+                <div class="col-md-3">
+                    <label class="form-label mb-1 small">Đơn giá:</label>
+                    <input type="number" name="donGias" class="form-control form-control-sm price-input" step="0.01" min="0" value="0" onchange="calculateRowTotal(this)" required>
+                </div>
+                
+                <div class="col-md-3">
+                    <label class="form-label mb-1 small">Thành tiền:</label>
+                    <input type="text" class="form-control form-control-sm row-total" readonly value="0 đ">
+                </div>
+                
+                <div class="col-md-1 text-center">
+                    <label class="form-label mb-1 small d-block">&nbsp;</label>
+                    <div class="btn-group-vertical" role="group">
+                        <button type="button" class="btn btn-outline-primary btn-sm mb-1" onclick="editProductRow(this)" title="Sửa">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="removeProductRow(this)" title="Xóa">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script th:inline="javascript">
+        let rowIndex = 0;
+        let hangHoaData = [];
+        let khachHangData = [];
+        
+        // Load customer and product data from API
+        async function loadData() {
+            try {
+                // Load customers
+                const customerResponse = await fetch('/khach-hang/api/all');
+                if (customerResponse.ok) {
+                    khachHangData = await customerResponse.json();
+                } else {
+                    console.warn('Failed to load customers');
+                }
+            } catch (error) {
+                console.error('Error loading customers:', error);
+            }
+            
+            try {
+                // Load products (with basic info only, no lazy relationships)
+                const productResponse = await fetch('/hang-hoa/api/all');
+                if (productResponse.ok) {
+                    hangHoaData = await productResponse.json();
+                } else {
+                    console.warn('Failed to load products');
+                }
+            } catch (error) {
+                console.error('Error loading products:', error);
+            }
+        }
+        
+        // Tự động load data và thêm 1 dòng khi load trang
+        window.addEventListener('load', async function() {
+            await loadData();
+            console.log('Data loaded:', { hangHoaCount: hangHoaData.length, khachHangCount: khachHangData.length });
+            console.log('First product:', hangHoaData[0]);
+            addProductRow();
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.classList.contains('product-search-input')) {
+                    const dropdowns = document.querySelectorAll('.product-suggestions-dropdown');
+                    dropdowns.forEach(dd => dd.style.display = 'none');
+                }
+            });
+        });
+
+        // ============ CUSTOMER SEARCH & ADD ============
+        function filterCustomers(inputElement) {
+            const searchValue = inputElement.value.trim().toLowerCase();
+            const datalist = document.getElementById('customerSuggestions');
+            
+            if (!datalist) return;
+            
+            // Clear previous suggestions
+            datalist.innerHTML = '';
+            
+            if (searchValue === '') {
+                return;
+            }
+            
+            // Filter customers
+            const matches = khachHangData.filter(kh => 
+                kh.hoTen.toLowerCase().includes(searchValue) ||
+                kh.soDienThoai.toLowerCase().includes(searchValue) ||
+                (kh.email && kh.email.toLowerCase().includes(searchValue))
+            );
+            
+            // Add top 10 matches to datalist
+            matches.slice(0, 10).forEach(kh => {
+                const option = document.createElement('option');
+                option.value = `${kh.hoTen} - ${kh.soDienThoai}`;
+                option.setAttribute('data-id', kh.id);
+                option.textContent = `${kh.hoTen} - ${kh.soDienThoai}`;
+                datalist.appendChild(option);
+            });
+        }
+
+        function selectCustomerFromSearch(inputElement) {
+            const searchValue = inputElement.value.trim();
+            
+            if (searchValue === '') {
+                clearCustomerSelection();
+                return;
+            }
+            
+            // Find matching customer
+            const customer = khachHangData.find(kh => 
+                `${kh.hoTen} - ${kh.soDienThoai}` === searchValue ||
+                kh.hoTen === searchValue ||
+                kh.soDienThoai === searchValue
+            );
+            
+            if (customer) {
+                applyCustomerSelection(customer);
+            } else {
+                // If not exact match, try partial
+                const partial = khachHangData.find(kh =>
+                    searchValue.includes(kh.hoTen) || searchValue.includes(kh.soDienThoai)
+                );
+                if (partial) {
+                    applyCustomerSelection(partial);
+                    inputElement.value = `${partial.hoTen} - ${partial.soDienThoai}`;
+                } else {
+                    clearCustomerSelection();
+                }
+            }
+        }
+
+        function applyCustomerSelection(customer) {
+            document.getElementById('customerIdInput').value = customer.id;
+            const customerInfo = document.getElementById('customerInfo');
+            if (customerInfo) {
+                customerInfo.textContent = customer.email ? `Email: ${customer.email}` : '';
+                customerInfo.classList.remove('d-none');
+            }
+        }
+
+        function clearCustomerSelection() {
+            document.getElementById('customerIdInput').value = '';
+            const customerInfo = document.getElementById('customerInfo');
+            if (customerInfo) {
+                customerInfo.classList.add('d-none');
+            }
+        }
+
+        function showNewCustomerModal() {
+            const modal = new bootstrap.Modal(document.getElementById('newCustomerModal'));
+            document.getElementById('newCustomerForm').reset();
+            modal.show();
+        }
+
+        async function saveNewCustomer() {
+            const name = document.getElementById('newCustomerName').value.trim();
+            const phone = document.getElementById('newCustomerPhone').value.trim();
+            const email = document.getElementById('newCustomerEmail').value.trim();
+            const address = document.getElementById('newCustomerAddress').value.trim();
+            
+            if (!name || !phone) {
+                alert('Vui lòng nhập đầy đủ họ tên và số điện thoại!');
+                return;
+            }
+            
+            try {
+                // Get CSRF token
+                const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+                const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+                
+                const response = await fetch('/khach-hang/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        [header]: token
+                    },
+                    body: new URLSearchParams({
+                        hoTen: name,
+                        soDienThoai: phone,
+                        email: email,
+                        diaChi: address
+                    })
+                });
+                
+                if (response.ok) {
+                    // Refresh customer list
+                    const refreshResponse = await fetch('/khach-hang/api/all');
+                    if (refreshResponse.ok) {
+                        khachHangData = await refreshResponse.json();
+                    }
+                    
+                    // Find and select the new customer
+                    const newCustomer = khachHangData.find(kh => kh.soDienThoai === phone);
+                    if (newCustomer) {
+                        document.getElementById('customerSearchInput').value = `${newCustomer.hoTen} - ${newCustomer.soDienThoai}`;
+                        applyCustomerSelection(newCustomer);
+                    }
+                    
+                    // Close modal
+                    const modalEl = document.getElementById('newCustomerModal');
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    modal.hide();
+                    
+                    alert('Đã thêm khách hàng mới thành công!');
+                } else {
+                    alert('Có lỗi xảy ra khi thêm khách hàng. Vui lòng thử lại!');
+                    console.error('Response status:', response.status);
+                }
+            } catch (error) {
+                console.error('Error saving customer:', error);
+                alert('Có lỗi xảy ra khi thêm khách hàng. Vui lòng thử lại!');
+            }
+        }
+
+        // ============ SALE TYPE & DEADLINE ============
+        
+        function toggleDeadlineField() {
+            const saleTypeSelect = document.getElementById('saleTypeSelect');
+            const deadlineField = document.getElementById('deadlineField');
+            const deadlineInput = document.getElementById('ngayHanThanhToanInput');
+            
+            if (saleTypeSelect.value === 'BAN_NO') {
+                // Show deadline field for debt sale
+                deadlineField.style.display = 'block';
+                deadlineInput.required = true;
+                
+                // Require customer selection for BAN_NO
+                const customerInput = document.getElementById('customerSearchInput');
+                if (!customerInput.value.trim()) {
+                    alert('Vui lòng chọn khách hàng trước khi bán nợ!');
+                    customerInput.focus();
+                }
+            } else {
+                // Hide deadline field for cash sale
+                deadlineField.style.display = 'none';
+                deadlineInput.required = false;
+                deadlineInput.value = '';
+            }
+        }
+
+        // Initialize deadline field visibility on page load
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                const saleTypeSelect = document.getElementById('saleTypeSelect');
+                if (saleTypeSelect && saleTypeSelect.value === 'BAN_NO') {
+                    toggleDeadlineField();
+                }
+            }, 100);
+        });
+
+        // ============ PRODUCT SEARCH ============
+        
+        function addProductRow() {
+            const template = document.getElementById('productRowTemplate');
+            const clone = template.content.cloneNode(true);
+            const row = clone.querySelector('.product-row');
+            const currentRowIndex = rowIndex++;
+            row.setAttribute('data-row-index', currentRowIndex);
+            
+            // Set unique ID for custom dropdown and link input to it
+            const dropdown = row.querySelector('.product-suggestions-dropdown');
+            const input = row.querySelector('.product-search-input');
+            const dropdownId = `productSuggestions-${currentRowIndex}`;
+            dropdown.id = dropdownId;
+            
+            // Add focus event to show suggestions on focus
+            input.addEventListener('focus', function() {
+                console.log('Product input focused, hangHoaData available:', hangHoaData.length);
+                // Show all products on focus if empty
+                if (this.value === '' && hangHoaData.length > 0) {
+                    filterProducts(this);
+                }
+            });
+            
+            document.getElementById('productList').appendChild(clone);
+        }
+
+        function removeProductRow(button) {
+            if (confirm('Bạn có chắc muốn xóa hàng hóa này không?')) {
+                const row = button.closest('.product-row');
+                row.remove();
+                calculateTotal();
+                
+                // Show success message
+                showSuccessMessage('Đã xóa hàng hóa khỏi danh sách!');
+                setTimeout(hideAllMessages, 2000);
+            }
+        }
+
+        function editProductRow(button) {
+            const row = button.closest('.product-row');
+            const isEditing = row.classList.contains('editing');
+            
+            if (isEditing) {
+                // Save changes
+                row.classList.remove('editing');
+                button.innerHTML = '<i class="fas fa-edit"></i>';
+                button.title = 'Sửa';
+                button.classList.remove('btn-success');
+                button.classList.add('btn-outline-primary');
+                
+                // Re-enable all inputs
+                const inputs = row.querySelectorAll('input, select');
+                inputs.forEach(input => {
+                    if (!input.classList.contains('row-total')) {
+                        input.removeAttribute('readonly');
+                    }
+                });
+                
+                calculateRowTotal(button);
+                showSuccessMessage('Đã cập nhật thông tin hàng hóa!');
+                setTimeout(hideAllMessages, 2000);
+                
+            } else {
+                // Enter edit mode
+                row.classList.add('editing');
+                button.innerHTML = '<i class="fas fa-save"></i>';
+                button.title = 'Lưu';
+                button.classList.remove('btn-outline-primary');
+                button.classList.add('btn-success');
+                
+                // Focus on first editable input
+                const firstInput = row.querySelector('.product-search-input');
+                if (firstInput) {
+                    firstInput.focus();
+                }
+            }
+        }
+
+        function filterProducts(inputElement) {
+            const searchValue = inputElement.value.trim().toLowerCase();
+            const row = inputElement.closest('.product-row');
+            const dropdown = row.querySelector('.product-suggestions-dropdown');
+            
+            console.log('filterProducts called:', { searchValue, dropdownFound: !!dropdown });
+            
+            if (!dropdown) {
+                console.error('Dropdown not found!');
+                return;
+            }
+            
+            // Clear previous suggestions
+            dropdown.innerHTML = '';
+            
+            // Filter products: Always exclude out-of-stock items (soLuongTon <= 0)
+            const availableProducts = hangHoaData.filter(hh => hh.soLuongTon > 0);
+            
+            // If empty or just focused, show all available products (top 10)
+            let matches;
+            if (searchValue === '') {
+                matches = availableProducts;
+            } else {
+                // Filter available products by search value
+                matches = availableProducts.filter(hh => 
+                    hh.tenHangHoa.toLowerCase().includes(searchValue) ||
+                    hh.soSerial.toLowerCase().includes(searchValue) ||
+                    (hh.maHangHoa && hh.maHangHoa.toLowerCase().includes(searchValue))
+                );
+            }
+            
+            console.log('Matches found:', matches.length);
+            
+            if (matches.length === 0) {
+                const noMatch = document.createElement('div');
+                noMatch.style.cssText = 'padding: 8px; color: #999; text-align: center;';
+                noMatch.textContent = 'Không tìm thấy sản phẩm';
+                dropdown.appendChild(noMatch);
+            } else {
+                // Add top 10 matches to dropdown
+                matches.slice(0, 10).forEach(hh => {
+                    const item = document.createElement('div');
+                    item.style.cssText = 'padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;';
+                    item.setAttribute('data-id', hh.id);
+                    item.setAttribute('data-value', `${hh.tenHangHoa} - ${hh.soSerial}`);
+                    item.textContent = `${hh.tenHangHoa} - ${hh.soSerial} (Tồn: ${hh.soLuongTon || 0})`;
+                    
+                    // Hover effect
+                    item.onmouseover = function() { this.style.backgroundColor = '#f8f9fa'; };
+                    item.onmouseout = function() { this.style.backgroundColor = 'transparent'; };
+                    
+                    // Click to select
+                    item.onclick = function() {
+                        inputElement.value = this.getAttribute('data-value');
+                        dropdown.style.display = 'none';
+                        selectProductFromSearch(inputElement);
+                    };
+                    
+                    dropdown.appendChild(item);
+                });
+            }
+            
+            // Show dropdown
+            dropdown.style.display = matches.length > 0 || searchValue === '' ? 'block' : 'none';
+            console.log('Dropdown items added:', dropdown.children.length);
+        }
+
+        function selectProductFromSearch(inputElement) {
+            const row = inputElement.closest('.product-row');
+            const searchValue = inputElement.value.trim();
+            
+            if (searchValue === '') {
+                clearProductSelection(row);
+                return;
+            }
+            
+            // Find matching product (only in-stock items)
+            const product = hangHoaData.find(hh => 
+                (hh.soLuongTon > 0) &&  // Must have stock
+                (`${hh.tenHangHoa} - ${hh.soSerial}` === searchValue ||
+                hh.tenHangHoa === searchValue ||
+                hh.soSerial === searchValue)
+            );
+            
+            if (product) {
+                applyProductToRow(row, product);
+            } else {
+                // If not exact match, try partial (only in-stock)
+                const partial = hangHoaData.find(hh =>
+                    (hh.soLuongTon > 0) &&  // Must have stock
+                    (searchValue.includes(hh.tenHangHoa) || searchValue.includes(hh.soSerial))
+                );
+                if (partial) {
+                    applyProductToRow(row, partial);
+                    inputElement.value = `${partial.tenHangHoa} - ${partial.soSerial}`;
+                } else {
+                    clearProductSelection(row);
+                }
+            }
+        }
+
+        function applyProductToRow(row, product) {
+            row.querySelector('.product-id-input').value = product.id;
+            row.querySelector('.price-input').value = product.giaBan || 0;
+            row.querySelector('.quantity-input').max = product.soLuongTon || 0;
+            
+            calculateRowTotal(row.querySelector('.quantity-input'));
+        }
+
+        function clearProductSelection(row) {
+            row.querySelector('.product-id-input').value = '';
+            row.querySelector('.price-input').value = 0;
+            row.querySelector('.quantity-input').max = '';
+            
+            calculateRowTotal(row.querySelector('.quantity-input'));
+        }
+
+        function updateProductInfo(selectElement) {
+            const row = selectElement.closest('.product-row');
+            const hangHoaId = selectElement.value;
+            
+            if (!hangHoaId) return;
+
+            // Find product info
+            fetch(`/phieu-xuat/api/hang-hoa/${hangHoaId}`)
+                .then(response => response.json())
+                .then(hangHoa => {
+                    if (hangHoa) {
+                        row.querySelector('.price-input').value = hangHoa.giaBan || 0;
+                        row.querySelector('.quantity-input').max = hangHoa.soLuongTon || 0;
+                        calculateRowTotal(selectElement);
+                    }
+                });
+        }
+
+        function calculateRowTotal(element) {
+            const row = element.closest('.product-row');
+            const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+            const price = parseFloat(row.querySelector('.price-input').value) || 0;
+            const total = quantity * price;
+            
+            row.querySelector('.row-total').value = formatCurrency(total);
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            let total = 0;
+            document.querySelectorAll('.product-row').forEach(row => {
+                const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+                const price = parseFloat(row.querySelector('.price-input').value) || 0;
+                total += quantity * price;
+            });
+            
+            document.getElementById('totalAmount').textContent = formatCurrency(total);
+        }
+
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+        }
+
+        // Current phieu xuat ID for printing
+        let currentPhieuXuatId = null;
+
+        // Submit form with AJAX to prevent page refresh
+        async function submitForm() {
+            const form = document.getElementById('exportForm');
+            const formData = new FormData(form);
+            
+            // Get CSRF token from the form
+            const csrfToken = document.querySelector('input[name="_csrf"]')?.value;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || 'X-CSRF-TOKEN';
+            
+            // Ensure CSRF token is in formData
+            if (csrfToken) {
+                formData.set('_csrf', csrfToken);
+            }
+            
+            // Ensure khachHangId is properly handled
+            const khachHangId = document.getElementById('customerIdInput').value;
+            if (khachHangId && khachHangId.trim() !== '') {
+                formData.set('khachHangId', khachHangId);
+            } else {
+                formData.delete('khachHangId'); // Remove empty value
+            }
+            
+            // Show loading state
+            const submitBtn = document.querySelector('button[onclick="submitForm()"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...';
+            submitBtn.disabled = true;
+            
+            try {
+                const headers = {};
+                
+                // Add CSRF token to headers if available
+                if (csrfToken) {
+                    headers[csrfHeader] = csrfToken;
+                }
+                
+                const response = await fetch('/phieu-xuat/api/save', {
+                    method: 'POST',
+                    body: formData,
+                    headers: headers
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentPhieuXuatId = result.phieuXuatId;
+                    
+                    // Show success message
+                    showSuccessMessage(result.message);
+                    
+                    // Lock confirm button and change to completed state
+                    lockConfirmButton();
+                    
+                    // Show edit and print buttons
+                    document.getElementById('editBtn').style.display = 'inline-block';
+                    document.getElementById('printBtn').style.display = 'inline-block';
+                    
+                    // Update hidden ID field
+                    document.querySelector('input[name="id"]').value = currentPhieuXuatId;
+                    
+                    // Disable form inputs (read-only mode)
+                    setFormReadOnly(true);
+                    
+                } else {
+                    showErrorMessage(result.message || 'Có lỗi xảy ra khi lưu phiếu xuất. Vui lòng thử lại!');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showErrorMessage('Có lỗi xảy ra khi lưu phiếu xuất. Vui lòng thử lại!');
+            } finally {
+                // Restore button state
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Print function
+        function printPhieuXuat() {
+            if (currentPhieuXuatId) {
+                window.open(`/phieu-xuat/${currentPhieuXuatId}/print`, '_blank');
+            } else {
+                alert('Chưa có thông tin phiếu xuất để in!');
+            }
+        }
+
+        // Lock confirm button after successful submission
+        function lockConfirmButton() {
+            const confirmBtn = document.getElementById('confirmBtn');
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Đã xuất hàng';
+            confirmBtn.className = 'btn btn-success btn-lg disabled';
+            confirmBtn.style.opacity = '0.6';
+        }
+
+        // Enable edit mode
+        function enableEditMode() {
+            // Enable form inputs
+            setFormReadOnly(false);
+            
+            // Change edit button to save button
+            const editBtn = document.getElementById('editBtn');
+            editBtn.innerHTML = '<i class="fas fa-save me-2"></i>Lưu thay đổi';
+            editBtn.className = 'btn btn-primary btn-lg';
+            editBtn.onclick = saveChanges;
+            
+            // Show notification
+            showSuccessMessage('Chế độ chỉnh sửa đã được kích hoạt. Bạn có thể thay đổi thông tin phiếu xuất.');
+        }
+
+        // Save changes in edit mode
+        async function saveChanges() {
+            // Reuse the submitForm logic but change button back after save
+            await submitForm();
+            
+            // Change save button back to edit button
+            const editBtn = document.getElementById('editBtn');
+            editBtn.innerHTML = '<i class="fas fa-edit me-2"></i>Sửa phiếu xuất';
+            editBtn.className = 'btn btn-warning btn-lg';
+            editBtn.onclick = enableEditMode;
+        }
+
+        // Set form read-only or editable
+        function setFormReadOnly(readonly) {
+            const form = document.getElementById('exportForm');
+            
+            // Handle regular inputs
+            const inputs = form.querySelectorAll('input:not([type="hidden"]):not(.row-total), select, textarea');
+            inputs.forEach(input => {
+                input.readOnly = readonly;
+                if (input.tagName === 'SELECT') {
+                    input.disabled = readonly;
+                }
+            });
+            
+            // Handle add/remove product buttons
+            const addBtn = form.querySelector('button[onclick="addProductRow()"]');
+            if (addBtn) {
+                addBtn.style.display = readonly ? 'none' : 'inline-block';
+            }
+            
+            // Handle product row buttons
+            const productBtns = form.querySelectorAll('.product-row button');
+            productBtns.forEach(btn => {
+                btn.style.display = readonly ? 'none' : 'inline-block';
+            });
+            
+            // Change form styling based on mode
+            if (readonly) {
+                form.classList.add('form-readonly');
+            } else {
+                form.classList.remove('form-readonly');
+            }
+        }
+
+        // Show success message
+        function showSuccessMessage(message) {
+            hideAllMessages();
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-check-circle me-2"></i>${message}
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            const container = document.querySelector('.container .col-12');
+            container.insertBefore(alertDiv, document.querySelector('form'));
+        }
+
+        // Show error message
+        function showErrorMessage(message) {
+            hideAllMessages();
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                <i class="fas fa-exclamation-triangle me-2"></i>${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            const container = document.querySelector('.container .col-12');
+            container.insertBefore(alertDiv, document.querySelector('form'));
+        }
+
+        // Hide all messages
+        function hideAllMessages() {
+            document.querySelectorAll('.alert').forEach(alert => {
+                alert.remove();
+            });
+        }
+
+        // Auto reset form after success message
+        window.addEventListener('load', function() {
+            const successAlert = document.querySelector('.alert-success');
+            if (successAlert) {
+                // Don't auto-clear form anymore - keep data for editing
+                // Show buttons if we have phieu xuat ID
+                const phieuXuatElement = document.querySelector('input[name="id"]');
+                if (phieuXuatElement && phieuXuatElement.value) {
+                    currentPhieuXuatId = phieuXuatElement.value;
+                    
+                    // Lock form and show appropriate buttons
+                    lockConfirmButton();
+                    setFormReadOnly(true);
+                    document.getElementById('editBtn').style.display = 'inline-block';
+                    document.getElementById('printBtn').style.display = 'inline-block';
+                }
+                // Clear form after showing message for 3 seconds
+                setTimeout(function() {
+                    // Reset form
+                    document.getElementById('exportForm').reset();
+                    // Clear product list
+                    document.getElementById('productList').innerHTML = '';
+                    // Add one empty row
+                    addProductRow();
+                    // Reset total
+                    document.getElementById('totalAmount').textContent = '0 đ';
+                    // Auto dismiss alert
+                    const closeBtn = successAlert.querySelector('.btn-close');
+                    if (closeBtn) closeBtn.click();
+                }, 3000);
+            }
+        });
+
+        // Form validation
+        document.getElementById('exportForm').addEventListener('submit', function(e) {
+            const rows = document.querySelectorAll('.product-row');
+            if (rows.length === 0) {
+                e.preventDefault();
+                alert('Vui lòng thêm ít nhất một hàng hóa!');
+                return false;
+            }
+            
+            // Validate product selection and quantities
+            let valid = true;
+            rows.forEach(row => {
+                const productId = row.querySelector('.product-id-input').value;
+                if (!productId) {
+                    valid = false;
+                    alert('Vui lòng chọn hàng hóa hợp lệ!');
+                    return;
+                }
+                
+                const quantity = parseInt(row.querySelector('.quantity-input').value);
+                const maxStock = parseInt(row.querySelector('.quantity-input').max);
+                
+                if (quantity > maxStock) {
+                    valid = false;
+                    alert('Số lượng xuất vượt quá tồn kho!');
+                }
+            });
+            
+            if (!valid) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // Auto-fill data for edit mode
+        function initEditMode() {
+            // Check if we're in edit mode (phieuXuat exists)
+            var phieuXuat = /*[[${phieuXuat}]]*/ null;
+            if (phieuXuat && phieuXuat.chiTietList) {
+                // Set current phieu xuat ID
+                currentPhieuXuatId = phieuXuat.id;
+                
+                // Lock form in read-only mode initially
+                setFormReadOnly(true);
+                lockConfirmButton();
+                
+                // Show edit and print buttons
+                document.getElementById('editBtn').style.display = 'inline-block';
+                document.getElementById('printBtn').style.display = 'inline-block';
+                
+                // Clear existing rows
+                document.getElementById('productList').innerHTML = '';
+                
+                // Fill customer info if exists
+                if (phieuXuat.khachHang) {
+                    document.getElementById('customerSearchInput').value = phieuXuat.khachHang.tenKhachHang;
+                    document.getElementById('customerIdInput').value = phieuXuat.khachHang.id;
+                    
+                    // Show customer info
+                    const customerInfo = document.getElementById('customerInfo');
+                    customerInfo.innerHTML = '<i class="fas fa-user me-1"></i>' + 
+                        phieuXuat.khachHang.tenKhachHang + ' - SĐT: ' + 
+                        (phieuXuat.khachHang.soDienThoai || 'Không có');
+                    customerInfo.classList.remove('d-none');
+                }
+                
+                // Add rows for each product
+                phieuXuat.chiTietList.forEach(function(chiTiet, index) {
+                    addProductRow();
+                    const row = document.querySelectorAll('.product-row')[index];
+                    
+                    // Set product
+                    const productSelect = row.querySelector('.product-select');
+                    productSelect.value = chiTiet.hangHoa.id;
+                    
+                    // Trigger change to load product info
+                    productSelect.dispatchEvent(new Event('change'));
+                    
+                    // Set quantity and price
+                    setTimeout(function() {
+                        row.querySelector('.quantity-input').value = chiTiet.soLuong;
+                        row.querySelector('.price-input').value = chiTiet.donGia;
+                        
+                        // Update amount
+                        row.querySelector('.amount-display').textContent = 
+                            (chiTiet.donGia * chiTiet.soLuong).toLocaleString('vi-VN') + ' đ';
+                    }, 100);
+                });
+                
+                // Update total after a delay
+                setTimeout(updateTotal, 200);
+            }
+        }
+
+        // Initialize edit mode when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initEditMode();
+        });
+    </script>
+</body>
+</html>

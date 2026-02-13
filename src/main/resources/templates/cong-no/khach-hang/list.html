@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nợ của Khách Hàng</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        .card-header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        .btn-group-custom {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .badge-dang-no { background-color: #ffc107; }
+        .badge-thanh-toan { background-color: #17a2b8; }
+        .badge-da-thanh-toan { background-color: #28a745; }
+        .badge-qua-han { background-color: #dc3545; }
+        .metric-box {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            border-left: 4px solid #f5576c;
+            margin-bottom: 1rem;
+        }
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #f5576c;
+        }
+        .table-hover tbody tr:hover {
+            background-color: #f5f5f5;
+        }
+        .overdue-row {
+            background-color: #fff5f5 !important;
+        }
+    </style>
+</head>
+<body>
+<!-- Navbar Fragment -->
+<div th:insert="~{cong-no/fragments/navbar.html :: congNoNavbar}"></div>
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="mb-0">
+                <i class="fas fa-handshake"></i> Quản Lý Nợ của Khách Hàng
+            </h1>
+            <p class="text-muted">Theo dõi và thu hồi công nợ từ khách hàng</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#filterModal">
+                <i class="fas fa-filter"></i> Lọc
+            </button>
+            <button class="btn btn-success" onclick="exportToExcel()">
+                <i class="fas fa-download"></i> Xuất Excel
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="metric-box">
+                <small class="text-muted">Tổng Nợ của Khách Hàng</small>
+                <div class="metric-value" th:text="${#format.vnd(totalDebt)}">0 VNĐ</div>
+                <small class="text-success">
+                    <i class="fas fa-check"></i> <span th:text="${collectedCount}">0</span> công nợ đã thu hồi
+                </small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-box">
+                <small class="text-muted">Nợ đã thu hồi</small>
+                <div class="metric-value text-success" th:text="${#format.vnd(totalCollected)}">0 VNĐ</div>
+                <small class="text-success">
+                    <i class="fas fa-check"></i> <span th:text="${collectedCount}">0</span> công nợ đã hoàn toàn thanh toán
+                </small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-box">
+                <small class="text-muted">Nợ Quá Hạn</small>
+                <div class="metric-value text-danger" th:text="${overdueDebtsCount}">0</div>
+                <small class="text-danger">
+                    <i class="fas fa-exclamation-triangle"></i> Cần xử lý ngay
+                </small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-box">
+                <small class="text-muted">Tổng Nợ Chưa Thu Hồi</small>
+                <div class="metric-value text-warning" th:text="${#format.vnd(totalDebt - totalCollected)}">0 VNĐ</div>
+                <small class="text-warning">
+                    <i class="fas fa-exclamation-circle"></i> Tiền khách hàng còn nợ
+                </small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-box" style="border-left-color: #dc3545;">
+                <small class="text-muted">Nợ Không Thể Thu Hồi</small>
+                <div class="metric-value text-danger" th:text="${#format.vnd(totalBadDebt)}">0 VNĐ</div>
+                <small class="text-danger">
+                    <i class="fas fa-ban"></i> <span th:text="${badDebtCount}">0</span> công nợ xấu
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert for Overdue Debts -->
+    <div th:if="${overdueDebtsCount > 0}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle"></i>
+        <strong>Cảnh Báo!</strong> Bạn có <span th:text="${overdueDebtsCount}">0</span> công nợ khách hàng quá hạn.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-list"></i> Danh Sách Công Nợ của Khách Hàng
+                <span class="badge bg-light text-dark float-end" th:text="${debts.size()} + ' công nợ'"></span>
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped" id="debtTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 100px;">Mã Phiếu</th>
+                            <th style="width: 180px;">Khách Hàng</th>
+                            <th style="width: 120px;">Tổng Nợ</th>
+                            <th style="width: 150px;">Đã Thu Hồi</th>
+                            <th style="width: 120px;">Còn Nợ</th>
+                            <th style="width: 140px;">Trạng Thái</th>
+                            <th style="width: 110px;">Hạn Chót</th>
+                            <th style="width: 130px;">Nợ Xấu</th>
+                            <th style="width: 150px;">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="debt : ${debts}" th:classappend="${debt.trangThai == 'QUA_HAN' ? 'overdue-row' : ''}">
+                            <td>
+                                <span class="fw-bold">
+                                    <i class="fas fa-receipt"></i>
+                                    <span th:text="${debt.soPhieuXuatBan}">XB001</span>
+                                </span>
+                            </td>
+                            <td>
+                                <strong th:text="${debt.khachHang.hoTen}">Khách hàng A</strong>
+                                <br>
+                                <small class="text-muted" th:text="${debt.khachHang.soDienThoai}">Số điện thoại</small>
+                            </td>
+                            <td>
+                                <span th:text="${#format.vnd(debt.tongTienNo)}">0 VNĐ</span>
+                            </td>
+                            <td>
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar bg-info"
+                                         th:style="${'width: ' + (debt.tongTienNo > 0 ? (debt.tongTienDaThanhToan / debt.tongTienNo * 100) : 0) + '%'}"
+                                         th:text="${debt.tongTienNo > 0 ? (#numbers.formatInteger((debt.tongTienDaThanhToan / debt.tongTienNo * 100), 0)) + '%' : '0%'}">
+                                    </div>
+                                </div>
+                                <small th:text="${#format.vnd(debt.tongTienDaThanhToan)}">0 VNĐ</small>
+                            </td>
+                            <td>
+                                <strong class="text-danger" th:text="${#format.vnd(debt.tongTienConNo)}">0 VNĐ</strong>
+                            </td>
+                            <td>
+                                <div>
+                                    <div th:switch="${debt.trangThai}" style="margin-bottom: 8px;">
+                                        <span th:case="'DANG_NO'" class="badge badge-dang-no">
+                                            <i class="fas fa-clock"></i> Đang Nợ
+                                        </span>
+                                        <span th:case="'THANH_TOAN_TUAN_TUAN'" class="badge badge-thanh-toan">
+                                            <i class="fas fa-sync"></i> Thu Hồi Từng Tuần
+                                        </span>
+                                        <span th:case="'DA_THANH_TOAN_HET'" class="badge badge-da-thanh-toan">
+                                            <i class="fas fa-check-circle"></i> Đã Thu Hồi
+                                        </span>
+                                        <span th:case="'QUA_HAN'" class="badge badge-qua-han">
+                                            <i class="fas fa-exclamation"></i> Quá Hạn
+                                        </span>
+                                    </div>
+                                    <small style="display: block; margin-bottom: 4px;">
+                                        <span th:if="${debt.tongTienConNo == 0}" class="badge bg-success">
+                                            <i class="fas fa-check"></i> Hoàn Thành
+                                        </span>
+                                        <span th:unless="${debt.tongTienConNo == 0}" class="badge bg-warning">
+                                            <i class="fas fa-hourglass"></i> Còn Nợ: <span th:text="${#format.vnd(debt.tongTienConNo)}">0 VNĐ</span>
+                                        </span>
+                                    </small>
+                                    <small th:if="${debt.ngayHanChot.isBefore(#temporals.createToday())}" style="display: block;">
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-calendar-times"></i> Quá Hạn
+                                        </span>
+                                    </small>
+                                </div>
+                            </td>
+                            <td>
+                                <span th:text="${#temporals.format(debt.ngayHanChot, 'dd/MM/yyyy')}">01/01/2025</span>
+                                <br>
+                                <small class="text-muted"
+                                       th:text="${debt.ngayHanChot.isBefore(#temporals.createToday()) ? '(QUÁ HẠN)' : ''}"></small>
+                            </td>
+                            <td>
+                                <div th:if="${debt.uncollectibleAmount != null && debt.uncollectibleAmount > 0}">
+                                    <span class="badge bg-danger" data-bs-toggle="tooltip" 
+                                          th:title="${'Lý do: ' + debt.uncollectibleReason}">
+                                        <i class="fas fa-ban"></i> Nợ Xấu
+                                    </span>
+                                    <br>
+                                    <small class="text-danger fw-bold" th:text="${#format.vnd(debt.uncollectibleAmount)}">0 VNĐ</small>
+                                </div>
+                                <div th:if="${debt.uncollectibleAmount == null || debt.uncollectibleAmount <= 0}">
+                                    <span class="text-muted">-</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="btn-group-custom">
+                                    <button class="btn btn-sm btn-info" 
+                                            onclick="viewDetail(this)"
+                                            th:data-debt-id="${debt.id}"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#detailModal">
+                                        <i class="fas fa-eye"></i> Chi Tiết
+                                    </button>
+                                    <button class="btn btn-sm btn-primary" 
+                                            onclick="openCollectionForm(this)"
+                                            th:data-debt-id="${debt.id}"
+                                            th:data-remaining="${debt.tongTienConNo}"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#collectionModal">
+                                        <i class="fas fa-coins"></i> Thu Hồi
+                                    </button>
+                                    <a th:href="${'/cong-no/no-khong-the-thu-hoi/' + debt.id + '/form'}" 
+                                       class="btn btn-sm btn-danger">
+                                        <i class="fas fa-ban"></i> Nợ Xấu
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(debts)}">
+                            <td colspan="8" class="text-center text-muted py-4">
+                                <i class="fas fa-inbox" style="font-size: 2rem;"></i>
+                                <p>Không có công nợ khách hàng nào</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Collection Modal -->
+<div class="modal fade" id="collectionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-coins"></i> Thu Hồi Công Nợ của Khách Hàng
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="collectionForm" method="POST" action="/api/debt/customer/payment">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Mã Công Nợ:</label>
+                        <input type="hidden" id="debtIdInput" name="debtId">
+                        <input type="text" class="form-control" id="debtCodeDisplay" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Khách Hàng:</label>
+                        <input type="text" class="form-control" id="customerDisplay" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Còn Nợ:</label>
+                        <input type="text" class="form-control text-danger fw-bold" id="remainingDebtDisplay" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Số Tiền Thu Hồi: <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" class="form-control" id="amountInput" 
+                               name="amount" required placeholder="Nhập số tiền">
+                        <small class="text-muted">Tối đa: <span id="maxAmount">0</span> VNĐ</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phương Thức Thu Hồi: <span class="text-danger">*</span></label>
+                        <select class="form-control" id="methodInput" name="method" required>
+                            <option value="">-- Chọn phương thức --</option>
+                            <option value="TIEN_MAT">Tiền Mặt</option>
+                            <option value="CHUYEN_KHOAN">Chuyển Khoản</option>
+                            <option value="THANG_NO">Thẳng Nợ</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ghi Chú:</label>
+                        <textarea class="form-control" id="noteInput" name="note" rows="3" 
+                                  placeholder="Ghi chú thêm..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check"></i> Xác Nhận Thu Hồi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle"></i> Chi Tiết Công Nợ của Khách Hàng
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detailContent">
+                <p class="text-center text-muted">Đang tải...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Modal -->
+<div class="modal fade" id="filterModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-filter"></i> Bộ Lọc
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="filterForm" method="GET" action="/cong-no/khach-hang/list">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Trạng Thái:</label>
+                        <select class="form-control" name="status">
+                            <option value="">-- Tất Cả --</option>
+                            <option value="DANG_NO">Đang Nợ</option>
+                            <option value="THANH_TOAN_TUAN_TUAN">Thu Hồi Từng Tuần</option>
+                            <option value="DA_THANH_TOAN_HET">Đã Thu Hồi</option>
+                            <option value="QUA_HAN">Quá Hạn</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Loại Công Nợ:</label>
+                        <select class="form-control" name="type">
+                            <option value="">-- Tất Cả --</option>
+                            <option value="NORMAL">Công Nợ Bình Thường</option>
+                            <option value="BAD_DEBT">Nợ Xấu (Không Thể Thu Hồi)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Khách Hàng:</label>
+                        <select class="form-control" name="customerId">
+                            <option value="">-- Tất Cả --</option>
+                            <option th:each="customer : ${customers}" 
+                                    th:value="${customer.id}"
+                                    th:text="${customer.hoTen}">
+                            </option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Từ Ngày:</label>
+                        <input type="date" class="form-control" name="fromDate">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Đến Ngày:</label>
+                        <input type="date" class="form-control" name="toDate">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Lọc
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function openCollectionForm(button) {
+        const debtId = button.getAttribute('data-debt-id');
+        const remaining = button.getAttribute('data-remaining');
+        
+        // Populate form with data
+        document.getElementById('debtIdInput').value = debtId;
+        document.getElementById('remainingDebtDisplay').textContent = new Intl.NumberFormat('vi-VN', 
+            { style: 'currency', currency: 'VND' }).format(remaining);
+        document.getElementById('amountInput').max = remaining;
+        document.getElementById('maxAmount').textContent = new Intl.NumberFormat('vi-VN', 
+            { style: 'currency', currency: 'VND' }).format(remaining);
+    }
+
+    function viewDetail(button) {
+        const debtId = button.getAttribute('data-debt-id');
+        
+        // Fetch detail data with proper error handling
+        fetch(`/api/debt/customer/${debtId}`, {
+            method: 'GET',
+            credentials: 'include', // Include cookies for session
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => {
+                // Check if response is successful
+                if (!response.ok) {
+                    throw new Error(`HTTP Error: ${response.status}`);
+                }
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Response is not JSON. Status: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Check if data contains success flag
+                if (!data.success || !data.data) {
+                    throw new Error('Invalid response format: ' + JSON.stringify(data));
+                }
+                const debt = data.data;
+                
+                // Format currency
+                const formatCurrency = (value) => {
+                    if (!value) return '0 VNĐ';
+                    return new Intl.NumberFormat('vi-VN', { 
+                        style: 'currency', 
+                        currency: 'VND' 
+                    }).format(value);
+                };
+                
+                // Render detail content
+                const html = `
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Mã Phiếu:</strong>
+                            <p>${debt.soPhieuXuatBan || 'N/A'}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Khách Hàng:</strong>
+                            <p>${debt.khachHangName || 'N/A'}</p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Địa Chỉ:</strong>
+                            <p>${debt.khachHangDiaChi || 'N/A'}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Số Điện Thoại:</strong>
+                            <p>${debt.khachHangSDT || 'N/A'}</p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Tổng Nợ:</strong>
+                            <p class="text-danger fw-bold">${formatCurrency(debt.tongTienNo)}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Đã Thu Hồi:</strong>
+                            <p class="text-success fw-bold">${formatCurrency(debt.tongTienDaThanhToan)}</p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <strong>Còn Nợ:</strong>
+                            <p class="text-danger fw-bold fs-5">${formatCurrency(debt.tongTienConNo)}</p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Trạng Thái:</strong>
+                            <p><span class="badge bg-info">${debt.trangThai || 'N/A'}</span></p>
+                            <small class="d-block" style="margin-top: 6px;">
+                                <span style="display: inline-block; padding: 4px 8px; border-radius: 4px; background-color: ${debt.tongTienConNo == 0 ? '#28a745' : '#ffc107'}; color: white; font-weight: bold;">
+                                    ${debt.tongTienConNo == 0 ? '<i class="fas fa-check"></i> Hoàn Thành' : '<i class="fas fa-hourglass"></i> Còn Nợ: ' + formatCurrency(debt.tongTienConNo)}
+                                </span>
+                            </small>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Hạn Chót:</strong>
+                            <p>${debt.ngayHanChot || 'N/A'}</p>
+                            <small class="d-block" style="margin-top: 6px;">
+                                <span id="overdueIndicator" style="display: ${debt.ngayHanChot && new Date(debt.ngayHanChot) < new Date() ? 'inline-block' : 'none'}; padding: 4px 8px; border-radius: 4px; background-color: #dc3545; color: white; font-weight: bold;">
+                                    <i class="fas fa-calendar-times"></i> Quá Hạn
+                                </span>
+                            </small>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <strong>Ghi Chú:</strong>
+                            <p>${debt.ghiChu || 'Không có'}</p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <strong>Hàng Hóa Đã Mua:</strong>
+                            <div id="invoiceItemsContainer" class="table-responsive mt-2">
+                                <div class="text-center text-muted"><small>Đang tải...</small></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <strong>Lịch Sử Thanh Toán:</strong>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Ngày TT</th>
+                                            <th>Số Phiếu</th>
+                                            <th>Số Tiền</th>
+                                            <th>Phương Thức</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${debt.payments && debt.payments.length > 0 ? 
+                                            debt.payments.map(p => `
+                                            <tr>
+                                                <td>${p.ngayTT || 'N/A'}</td>
+                                                <td>${p.soPhieu || 'N/A'}</td>
+                                                <td class="text-success">${formatCurrency(p.soTienTT)}</td>
+                                                <td>${p.phuongThucTT || 'N/A'}</td>
+                                            </tr>
+                                        `).join('') : '<tr><td colspan="4" class="text-center text-muted">Chưa có thanh toán</td></tr>'
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('detailContent').innerHTML = html;
+                
+                // Load invoice items
+                loadInvoiceItems(debt.soPhieuXuatBan);
+            })
+            .catch(error => {
+                console.error('Error loading detail:', error);
+                document.getElementById('detailContent').innerHTML = `
+                    <div class="alert alert-danger" role="alert">
+                        <h4 class="alert-heading">Lỗi tải dữ liệu</h4>
+                        <p>${error.message}</p>
+                        <small>Vui lòng kiểm tra kết nối hoặc đăng nhập lại.</small>
+                    </div>
+                `;
+            });
+    }
+
+    function loadInvoiceItems(soPhieuXuatBan) {
+        fetch(`/api/debt/customer/invoice-items/${soPhieuXuatBan}`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Response is not JSON');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!data.success) {
+                    throw new Error(data.error || 'Lỗi tải dữ liệu');
+                }
+                
+                const formatCurrency = (value) => {
+                    if (!value) return '0 VNĐ';
+                    return new Intl.NumberFormat('vi-VN', { 
+                        style: 'currency', 
+                        currency: 'VND' 
+                    }).format(value);
+                };
+                
+                let html = '';
+                if (data.items && data.items.length > 0) {
+                    html = `
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Tên Hàng Hóa</th>
+                                    <th class="text-end">Số Lượng</th>
+                                    <th class="text-end">Đơn Giá</th>
+                                    <th class="text-end">Thành Tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.items.map(item => `
+                                <tr>
+                                    <td>${item.tenHangHoa || 'N/A'}</td>
+                                    <td class="text-end">${item.soLuong || 0}</td>
+                                    <td class="text-end">${formatCurrency(item.donGia)}</td>
+                                    <td class="text-end fw-bold">${formatCurrency(item.thanhTien)}</td>
+                                </tr>
+                                `).join('')}
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <td colspan="3" class="text-end fw-bold">Tổng Cộng:</td>
+                                    <td class="text-end fw-bold text-danger">${formatCurrency(data.tongTien)}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    `;
+                } else {
+                    html = '<div class="alert alert-info" role="alert">Không có hàng hóa nào</div>';
+                }
+                document.getElementById('invoiceItemsContainer').innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error loading invoice items:', error);
+                document.getElementById('invoiceItemsContainer').innerHTML = `
+                    <div class="alert alert-warning" role="alert">
+                        <small>Không thể tải danh sách hàng hóa: ${error.message}</small>
+                    </div>
+                `;
+            });
+    }
+
+    function exportToExcel() {
+        // Get table data
+        const table = document.getElementById('debtTable');
+        const rows = table.querySelectorAll('tbody tr');
+        
+        if (rows.length === 0) {
+            alert('Không có dữ liệu để xuất!');
+            return;
+        }
+        
+        // Prepare headers
+        const headers = ['Mã Phiếu', 'Khách Hàng', 'Số Điện Thoại', 'Tổng Nợ', 'Đã Thu Hồi', 'Còn Nợ', 'Trạng Thái', 'Hạn Chót', 'Nợ Xấu (VNĐ)', 'Lý Do Nợ Xấu'];
+        
+        // Prepare data rows
+        const data = [];
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length > 1) {
+                const invoiceNumber = cells[0].textContent.trim().replace('XB', '').trim();
+                const customerInfo = cells[1].textContent.trim().split('\n');
+                const customerName = customerInfo[0];
+                const phone = customerInfo[1] || '';
+                const totalDebt = cells[2].textContent.trim();
+                const collectedAmount = cells[3].querySelector('small') ? cells[3].querySelector('small').textContent.trim() : cells[3].textContent.trim();
+                const remainingDebt = cells[4].textContent.trim();
+                const status = cells[5].textContent.trim();
+                const deadline = cells[6].textContent.trim().split('\n')[0];
+                
+                // Extract bad debt info
+                let badDebtAmount = '';
+                let badDebtReason = '';
+                const badDebtCell = cells[7];
+                const badDebtBadge = badDebtCell.querySelector('.badge');
+                if (badDebtBadge) {
+                    badDebtAmount = badDebtCell.querySelector('small') ? badDebtCell.querySelector('small').textContent.trim() : '';
+                    badDebtReason = badDebtBadge.getAttribute('data-bs-original-title') || badDebtBadge.getAttribute('title') || '';
+                }
+                
+                data.push([invoiceNumber, customerName, phone, totalDebt, collectedAmount, remainingDebt, status, deadline, badDebtAmount, badDebtReason]);
+            }
+        });
+        
+        // Create workbook using SheetJS
+        const workbook = XLSX.utils.book_new();
+        
+        // Convert to sheet
+        const worksheetData = [headers, ...data];
+        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+        
+        // Set column widths
+        const colWidths = [
+            { wch: 12 }, // Mã Phiếu
+            { wch: 25 }, // Khách Hàng
+            { wch: 15 }, // Số Điện Thoại
+            { wch: 15 }, // Tổng Nợ
+            { wch: 15 }, // Đã Thu Hồi
+            { wch: 15 }, // Còn Nợ
+            { wch: 20 }, // Trạng Thái
+            { wch: 15 }, // Hạn Chót
+            { wch: 15 }, // Nợ Xấu (VNĐ)
+            { wch: 30 }  // Lý Do Nợ Xấu
+        ];
+        worksheet['!cols'] = colWidths;
+        
+        // Style header row
+        for (let i = 0; i < headers.length; i++) {
+            const cellRef = XLSX.utils.encode_cell({ r: 0, c: i });
+            worksheet[cellRef].s = {
+                font: { bold: true, color: { rgb: "FFFFFF" } },
+                fill: { fgColor: { rgb: "E85D75" } },
+                alignment: { horizontal: "center", vertical: "center" },
+                border: {
+                    top: { style: "thin" },
+                    bottom: { style: "thin" },
+                    left: { style: "thin" },
+                    right: { style: "thin" }
+                }
+            };
+        }
+        
+        // Add borders to all cells
+        for (let r = 1; r < worksheetData.length; r++) {
+            for (let c = 0; c < headers.length; c++) {
+                const cellRef = XLSX.utils.encode_cell({ r: r, c: c });
+                if (worksheet[cellRef]) {
+                    worksheet[cellRef].s = {
+                        alignment: { horizontal: "left", vertical: "center" },
+                        border: {
+                            top: { style: "thin" },
+                            bottom: { style: "thin" },
+                            left: { style: "thin" },
+                            right: { style: "thin" }
+                        }
+                    };
+                }
+            }
+        }
+        
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Nợ Khách Hàng");
+        
+        // Generate filename with current date
+        const filename = `Danh_sach_cong_no_khach_hang_${new Date().toISOString().split('T')[0]}.xlsx`;
+        
+        // Write file
+        XLSX.writeFile(workbook, filename);
+        
+        alert('Dữ liệu đã được xuất thành công!');
+    }
+
+    // Validate collection amount
+    document.getElementById('amountInput').addEventListener('change', function() {
+        const max = parseFloat(this.max);
+        const value = parseFloat(this.value);
+        if (value > max) {
+            alert(`Số tiền không được vượt quá ${max}`);
+            this.value = max;
+        }
+    });
+
+    // Handle collection form submission - Convert to JSON
+    document.getElementById('collectionForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Get form data
+        const debtId = document.getElementById('debtIdInput').value;
+        const amount = document.getElementById('amountInput').value;
+        const method = document.getElementById('methodInput').value;
+        const note = document.getElementById('noteInput').value;
+        
+        // Validate inputs
+        if (!debtId || !amount || !method) {
+            alert('Vui lòng điền đầy đủ thông tin!');
+            return;
+        }
+        
+        // Send as JSON
+        fetch('/api/debt/customer/payment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]')?.getAttribute('content') || ''
+            },
+            body: JSON.stringify({
+                debtId: parseInt(debtId),
+                amount: parseFloat(amount),
+                method: method,
+                note: note
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Thu hồi công nợ thành công!');
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('collectionModal'));
+                modal.hide();
+                // Redirect to dashboard to show updated chart
+                setTimeout(() => {
+                    window.location.href = '/cong-no/dashboard';
+                }, 500);
+            } else {
+                alert('Lỗi: ' + (data.message || data.error || 'Không rõ lỗi'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra: ' + error.message);
+        });
+    });
+</script>
+</body>
+</html>

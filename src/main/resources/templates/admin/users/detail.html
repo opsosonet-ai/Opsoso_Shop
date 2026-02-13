@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle} + ' - OSS'">Chi tiết User - OSS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .card {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: none;
+        }
+        .detail-row {
+            padding: 1rem 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #495057;
+        }
+        .detail-value {
+            color: #212529;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <div th:insert="layout/navbar.html"></div>
+
+    <!-- Main Container -->
+    <div class="container mt-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h1>
+                        <i class="fas fa-user-lock me-2"></i>Chi tiết User
+                    </h1>
+                    <div>
+                        <a th:href="'/admin/users/' + ${user.id} + '/edit'" class="btn btn-primary me-2">
+                            <i class="fas fa-edit me-1"></i>Chỉnh sửa
+                        </a>
+                        <a href="/admin/users" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Quay lại
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Details -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Thông tin chi tiết
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="detail-row">
+                            <div class="detail-label">ID:</div>
+                            <div class="detail-value" th:text="${user.id}">1</div>
+                        </div>
+                        
+                        <div class="detail-row">
+                            <div class="detail-label">Tên đăng nhập:</div>
+                            <div class="detail-value" th:text="${user.username}">username</div>
+                        </div>
+                        
+                        <div class="detail-row">
+                            <div class="detail-label">Họ tên:</div>
+                            <div class="detail-value" th:text="${user.fullName ?: 'Chưa cập nhật'}">Full Name</div>
+                        </div>
+                        
+                        <div class="detail-row">
+                            <div class="detail-label">Email:</div>
+                            <div class="detail-value">
+                                <a th:href="'mailto:' + ${user.email}" th:text="${user.email ?: 'Chưa cập nhật'}">
+                                    email@example.com
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-row">
+                            <div class="detail-label">Vai trò:</div>
+                            <div class="detail-value">
+                                <span th:if="${user.role}" th:text="${user.role}">ROLE_USER</span>
+                                <span th:unless="${user.role}" class="text-muted">Chưa cập nhật</span>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-row">
+                            <div class="detail-label">Ngày tạo:</div>
+                            <div class="detail-value">
+                                <span th:if="${user.createdAt}" th:text="${#temporals.format(user.createdAt, 'dd/MM/yyyy HH:mm:ss')}">
+                                    01/01/2024 10:00:00
+                                </span>
+                                <span th:unless="${user.createdAt}" class="text-muted">Chưa cập nhật</span>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-row border-0">
+                            <div class="detail-label">Ngày cập nhật:</div>
+                            <div class="detail-value">
+                                <span th:if="${user.updatedAt}" th:text="${#temporals.format(user.updatedAt, 'dd/MM/yyyy HH:mm:ss')}">
+                                    01/01/2024 10:00:00
+                                </span>
+                                <span th:unless="${user.updatedAt}" class="text-muted">Chưa cập nhật</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions Card -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="fas fa-cog me-2"></i>Thao tác
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <a th:href="'/admin/users/' + ${user.id} + '/edit'" class="btn btn-primary w-100 mb-2">
+                            <i class="fas fa-edit me-2"></i>Chỉnh sửa
+                        </a>
+                        <a th:href="'/admin/users/' + ${user.id} + '/delete-confirm'" class="btn btn-danger w-100">
+                            <i class="fas fa-trash me-2"></i>Xóa User
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-light text-center py-3 mt-5">
+        <p class="text-muted mb-0">&copy; 2024 OSS - Chi tiết User</p>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

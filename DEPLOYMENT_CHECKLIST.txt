@@ -1,0 +1,202 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                ║
+║                      DEPLOYMENT CHECKLIST - LAZY INIT FIX                    ║
+║                                                                                ║
+║                         November 7, 2025 | BUILD: SUCCESS                     ║
+║                                                                                ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+PRE-DEPLOYMENT VERIFICATION
+════════════════════════════════════════════════════════════════════════════════
+
+□ Code Changes Complete
+  ✓ PhieuXuatDTO.java created
+  ✓ ChiTietPhieuXuatDTO.java created
+  ✓ ChiTietPhieuXuatRepository.java updated
+  ✓ TraHangController.java updated
+
+□ Build Status Verified
+  ✓ mvn clean package -DskipTests executed
+  ✓ Compilation: 0 errors
+  ✓ Warnings: 0
+  ✓ JAR file: demo-0.0.1-SNAPSHOT.jar (71 MB)
+
+□ Code Review Completed
+  ✓ DTO imports added to controller
+  ✓ API endpoints return DTOs
+  ✓ Repository query uses NEW constructor projection
+  ✓ No leftover entity serialization code
+
+□ Documentation Created
+  ✓ LAZY_INITIALIZATION_EXCEPTION_FIX.md (comprehensive)
+  ✓ LAZY_INIT_FIX_SUMMARY.txt (quick reference)
+
+
+DEPLOYMENT PROCEDURE
+════════════════════════════════════════════════════════════════════════════════
+
+□ Pre-Deployment (Development/Staging)
+
+  1. [ ] Backup current JAR file
+      cp target/demo-0.0.1-SNAPSHOT.jar demo-backup-$(date +%s).jar
+
+  2. [ ] Stop Spring Boot application
+      ps aux | grep java
+      kill -9 <PID>
+
+  3. [ ] Verify application is stopped
+      Check: http://localhost:8080 (should not respond)
+
+  4. [ ] Replace JAR file
+      cp target/demo-0.0.1-SNAPSHOT.jar /path/to/deployment/
+
+  5. [ ] Start Spring Boot application
+      java -jar demo-0.0.1-SNAPSHOT.jar &
+
+  6. [ ] Verify application started
+      tail -f logs/application.log
+      Look for: "Tomcat started on port(s): 8080"
+
+
+□ Post-Deployment Testing
+
+  1. [ ] Test Invoice Search API
+      curl -s http://localhost:8080/tra-hang/api/all-phieu-xuat | jq
+      Expected: JSON array with PhieuXuatDTO objects
+      Not expected: Exception, null, error
+
+  2. [ ] Test Product Details API
+      curl -s http://localhost:8080/tra-hang/api/phieu-xuat/1/chi-tiet | jq
+      Expected: JSON array with ChiTietPhieuXuatDTO objects
+      Not expected: Exception, null, error
+
+  3. [ ] Test Full UI Flow
+      Visit: http://localhost:8080/tra-hang/them
+      - Type invoice code in search box
+      - Verify suggestions appear (< 50ms)
+      - Select invoice from dropdown
+      - Verify customer name auto-fills
+      - Verify product dropdown populates
+      - Select product
+      - Verify unit price auto-fills
+      - Submit form
+
+  4. [ ] Monitor Application Logs
+      tail -f logs/application.log
+      Check for: LazyInitializationException (should NOT appear)
+      Look for: Any error messages (should be none)
+
+  5. [ ] Check Browser Console
+      Press F12 → Console tab
+      Monitor network requests
+      Expected: All requests return 200 OK
+      Not expected: 500 errors, network failures
+
+
+□ Verification Checklist
+
+  1. [ ] No LazyInitializationException in logs
+  2. [ ] API endpoints return clean JSON
+  3. [ ] Invoice search form works end-to-end
+  4. [ ] No new errors in application.log
+  5. [ ] Response times acceptable (< 1s total)
+  6. [ ] Database integrity intact
+  7. [ ] All existing features still work
+
+
+ROLLBACK PLAN (if needed)
+════════════════════════════════════════════════════════════════════════════════
+
+□ In case of issues:
+
+  1. [ ] Stop Spring Boot application
+      ps aux | grep java
+      kill -9 <PID>
+
+  2. [ ] Restore previous JAR
+      cp demo-backup-*.jar target/demo-0.0.1-SNAPSHOT.jar
+      (Use the most recent backup)
+
+  3. [ ] Restart with previous version
+      java -jar demo-0.0.1-SNAPSHOT.jar &
+
+  4. [ ] Verify it works
+      Check: http://localhost:8080/tra-hang/them
+
+  5. [ ] Report issue
+      Contact developer with:
+      - Error message from logs
+      - Stack trace if available
+      - When the error occurred
+
+
+TESTING COMMANDS
+════════════════════════════════════════════════════════════════════════════════
+
+Test 1: Check application is running
+  curl -s http://localhost:8080/api/health | jq
+
+Test 2: Get all invoices
+  curl -s http://localhost:8080/tra-hang/api/all-phieu-xuat | jq '.' | head -30
+
+Test 3: Get products for invoice #1
+  curl -s http://localhost:8080/tra-hang/api/phieu-xuat/1/chi-tiet | jq
+
+Test 4: Check logs for errors
+  grep -i "exception\|error" logs/application.log | tail -20
+
+Test 5: Monitor real-time logs
+  tail -f logs/application.log | grep -i "lazy\|error"
+
+
+DOCUMENTATION REFERENCES
+════════════════════════════════════════════════════════════════════════════════
+
+File: LAZY_INITIALIZATION_EXCEPTION_FIX.md
+  - Complete problem analysis
+  - Solution explanation
+  - DTO design rationale
+  - API response examples
+  - Testing procedures
+
+File: LAZY_INIT_FIX_SUMMARY.txt
+  - Quick reference guide
+  - Before/after comparison
+  - Problem explanation
+  - Solution in 3 steps
+
+
+DEPLOYMENT SIGN-OFF
+════════════════════════════════════════════════════════════════════════════════
+
+Deployed By:     _____________________     Date: __________
+
+Tested By:       _____________________     Date: __________
+
+Verified By:     _____________________     Date: __________
+
+Notes:           ________________________________________________
+                 ________________________________________________
+                 ________________________________________________
+
+Status:          [ ] Successful    [ ] Rollback    [ ] Issues
+
+
+CONTACT FOR ISSUES
+════════════════════════════════════════════════════════════════════════════════
+
+If LazyInitializationException appears after deployment:
+
+1. Check if it's in /tra-hang/api/* endpoints (API issue)
+2. Check logs for exact error message
+3. Verify DTOs are in use (check API response format)
+4. If still failing, execute rollback plan above
+
+Questions about the fix?
+- See LAZY_INITIALIZATION_EXCEPTION_FIX.md for full details
+- Check LAZY_INIT_FIX_SUMMARY.txt for quick overview
+
+
+════════════════════════════════════════════════════════════════════════════════
+                         Ready for Deployment ✅
+════════════════════════════════════════════════════════════════════════════════

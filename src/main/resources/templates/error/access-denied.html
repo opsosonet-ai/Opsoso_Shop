@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Không có quyền truy cập</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container">
+        <div class="row justify-content-center align-items-center min-vh-100">
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow">
+                    <div class="card-body text-center p-5">
+                        <div class="mb-4">
+                            <i class="fas fa-exclamation-triangle fa-5x text-warning"></i>
+                        </div>
+                        <h3 class="card-title text-danger mb-3">
+                            <i class="fas fa-lock me-2"></i>Không có quyền truy cập
+                        </h3>
+                        <p class="card-text text-muted mb-4">
+                            Bạn không có quyền truy cập vào trang này. 
+                            Vui lòng liên hệ quản trị viên để được cấp quyền.
+                        </p>
+                        
+                        <div class="d-grid gap-2">
+                            <a href="/dashboard" class="btn btn-primary">
+                                <i class="fas fa-home me-2"></i>Về trang chủ
+                            </a>
+                            <a href="/auth/logout" class="btn btn-outline-secondary">
+                                <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                            </a>
+                        </div>
+                        
+                        <div class="mt-4 text-muted small">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Mã lỗi: 403 - Forbidden
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

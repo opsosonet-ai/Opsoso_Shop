@@ -1,0 +1,18 @@
+target/
+*.log
+backups/
+cookies.txt
+.vscode/
+# Ignore specifically large backups but keep migration scripts
+backup_oss_*.sql
+pre_migration_backup_*.sql
+oss_backup_*.sql
+*.class
+*.jar
+*.war
+*.ear
+.idea/
+*.iml
+.settings/
+.project
+.classpath
